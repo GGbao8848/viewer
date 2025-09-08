@@ -35,8 +35,8 @@
 1. **克隆项目**（如果是从GitHub克隆）
 
 ```bash
-git clone https://github.com/your-username/abnormal-image-classifier.git
-cd abnormal-image-classifier
+git clone https://github.com/GGbao8848/viewer.git
+cd viewer
 ```
 
 2. **安装依赖**
@@ -54,10 +54,10 @@ pip install -r requirements.txt
 或者直接运行：
 
 ```bash
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uvicorn main:app --reload --host 127.0.0.1 --port 8848
 ```
 
-4. 打开浏览器，访问 `http://127.0.0.1:8000`
+4. 打开浏览器，访问 `http://127.0.0.1:8848`
 
 ## 使用说明
 

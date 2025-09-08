@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异常图像分类工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .header {
+            background-color: #fff;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .directory-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .directory-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .image-list-container {
+            width: 250px;
+            background-color: #fff;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .list-header {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .sort-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .sort-btn {
+            padding: 6px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .sort-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sort-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .clear-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .clear-btn {
+            padding: 6px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        
+        .image-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        
+        /* 图像列表标题行 */
+        .list-header-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            padding: 8px 10px;
+            font-weight: bold;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 12px;
+            color: #495057;
+        }
+        
+        .image-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            padding: 8px 10px;
+            margin: 0;
+            border: none;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 0;
+            cursor: pointer;
+            background-color: #fff;
+            transition: all 0.2s;
+            align-items: center;
+        }
+        
+        /* 移除最后一项的底边框 */
+        .image-item:last-child {
+            border-bottom: none;
+        }
+        
+        .image-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .image-item.active {
+            background-color: #e3f2fd;
+        }
+        
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .image-name {
+            font-size: 13px;
+            color: #212529;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 10px;
+        }
+        
+        .image-status {
+            min-width: 60px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        /* 列表项中的列间距 */
+        .list-header-row > div,
+        .image-item > div {
+            padding: 0 5px;
+        }
+        
+        .status-wubao {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .status-zhengbao {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .status-unclassified {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .image-viewer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+        }
+        
+        .image-display {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        .image-display img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        
+        .image-info {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .image-controls {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-label {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .control-slider {
+            width: 150px;
+        }
+        
+        .control-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .reset-btn {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .reset-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        .keyboard-hint {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
+        .hint-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .hint-item {
+            margin-bottom: 3px;
+        }
+        
+        .no-images {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <input type="text" class="directory-input" placeholder="请输入图像文件夹路径" onkeypress="handleDirectoryInput(event)">
+            <span id="current-directory" style="color: #6c757d; font-size: 12px;">未选择文件夹</span>
+        </div>
+        
+        <div class="content">
+            <div class="image-list-container">
+                <div class="list-header">
+                    <div class="sort-controls">
+                        <button class="sort-btn" id="sort-asc" onclick="setSortOrder('asc')">从小到大排序</button>
+                        <button class="sort-btn active" id="sort-desc" onclick="setSortOrder('desc')">从大到小排序</button>
+                    </div>
+                    <div class="clear-controls">
+                        <button class="clear-btn" onclick="clearCurrentClassification()">清除当前分类</button>
+                        <button class="clear-btn" onclick="clearAllClassifications()">清除所有分类</button>
+                    </div>
+                    <div class="filter-controls">
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="filter-wubao" onchange="updateFilters()">
+                            误报
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="filter-zhengbao" onchange="updateFilters()">
+                            正报
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="filter-unclassified" checked onchange="updateFilters()">
+                            未分类
+                        </label>
+                    </div>
+                </div>
+                <div class="image-list" id="image-list">
+                    <div class="no-images">
+                        <p>请输入文件夹路径以加载图像</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-viewer">
+                <div class="image-display" id="image-display">
+                    <div class="no-images">
+                        <p>暂无图像显示</p>
+                    </div>
+                </div>
+                <div class="image-info" id="image-info">
+                    请选择图像
+                </div>
+                <div class="image-controls">
+                    <div class="control-group">
+                        <label class="control-label">旋转:</label>
+                        <input type="range" class="control-slider" id="rotate-slider" min="-180" max="180" value="0" oninput="applyRotation(this.value)">
+                        <span id="rotate-value">0°</span>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">亮度:</label>
+                        <input type="range" class="control-slider" id="brightness-slider" min="-100" max="100" value="0" oninput="applyBrightness(this.value)">
+                        <span id="brightness-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">对比度:</label>
+                        <input type="range" class="control-slider" id="contrast-slider" min="0" max="3" step="0.1" value="1" oninput="applyContrast(this.value)">
+                        <span id="contrast-value">1.0</span>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-checkbox">
+                            <input type="checkbox" id="grayscale-checkbox" onchange="applyGrayscale(this.checked)">
+                            灰度图
+                        </label>
+                    </div>
+                    <button class="reset-btn" onclick="resetImageOperations()">重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="keyboard-hint">
+        <div class="hint-title">键盘快捷键:</div>
+        <div class="hint-item">↑ ↓: 上一张/下一张</div>
+        <div class="hint-item">D: 标记为误报</div>
+        <div class="hint-item">F: 标记为正报</div>
+        <div class="hint-item">C: 清除当前图像分类</div>
+    </div>
+    
+    <script>
+        let currentImages = [];
+        let currentImageIndex = -1;
+        let currentDirectory = null;
+        let websocket = null;
+        let currentSortOrder = 'desc';
+        let isAutoSelecting = false; // 标记是否正在自动选择下一张图像
+        
+        // 初始化前端状态
+        function initFrontendState() {
+            // 设置过滤器复选框状态，与后端保持一致
+            document.getElementById('filter-wubao').checked = true;
+            document.getElementById('filter-zhengbao').checked = true;
+            document.getElementById('filter-unclassified').checked = true;
+        }
+        
+        // 初始化WebSocket连接
+        function initWebSocket() {
+            if (websocket) {
+                websocket.close();
+            }
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+            websocket = new WebSocket(`${protocol}//${host}/ws`);
+            
+            websocket.onopen = function() {
+                console.log('WebSocket连接已建立');
+            };
+            
+            websocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                currentImages = data.image_files;
+                currentDirectory = data.current_directory;
+                
+                // 只有当不是自动选择下一张图像时，才更新currentImageIndex
+                // 这样可以防止自动选择下一张的操作被WebSocket更新覆盖
+                if (!isAutoSelecting) {
+                    currentImageIndex = data.current_index;
+                }
+                
+                updateImageList();
+                updateImageDisplay();
+                updateDirectoryDisplay();
+                
+                // 重置自动选择标志
+                isAutoSelecting = false;
+            };
+            
+            websocket.onclose = function() {
+                console.log('WebSocket连接已关闭');
+                // 尝试重新连接
+                setTimeout(initWebSocket, 1000);
+            };
+        }
+        
+        // 处理目录输入
+        function handleDirectoryInput(event) {
+            if (event.key === 'Enter') {
+                const directory = event.target.value;
+                setDirectory(directory);
+            }
+        }
+        
+        // 添加防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // 自动处理目录输入变化
+        let debouncedSetDirectory = debounce((directory) => {
+            if (directory && directory.trim()) {
+                setDirectory(directory);
+            }
+        }, 500); // 500毫秒防抖延迟
+        
+        // 添加输入事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            const directoryInput = document.querySelector('.directory-input');
+            if (directoryInput) {
+                directoryInput.addEventListener('input', function() {
+                    const directory = this.value;
+                    debouncedSetDirectory(directory);
+                });
+            }
+        });
+        
+        // 设置目录
+        async function setDirectory(directory) {
+            try {
+                const response = await fetch('/set_directory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ directory })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('设置目录失败');
+                }
+                
+                const data = await response.json();
+                currentImages = data.images;
+                currentDirectory = data.directory;
+                currentImageIndex = 0;
+                updateImageList();
+                updateImageDisplay();
+                updateDirectoryDisplay();
+                resetImageControls();
+            } catch (error) {
+                alert('错误: ' + error.message);
+            }
+        }
+        
+        // 更新图像列表
+        function updateImageList() {
+            const imageList = document.getElementById('image-list');
+            
+            if (currentImages.length === 0) {
+                imageList.innerHTML = `
+                    <div class="no-images">
+                        <p>请输入文件夹路径以加载图像</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            // 添加标题行
+            html += `
+                <div class="list-header-row">
+                    <div>文件名</div>
+                    <div>状态</div>
+                </div>
+            `;
+            
+            currentImages.forEach((image, index) => {
+                const isActive = index === currentImageIndex;
+                const statusClass = `status-${image.status}`;
+                
+                html += `
+                    <div class="image-item ${isActive ? 'active' : ''}" onclick="selectImage(${index})">
+                        <div class="image-name">${image.name}</div>
+                        <div class="image-status">
+                            <span class="status-badge ${statusClass}">${getStatusText(image.status)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            imageList.innerHTML = html;
+        }
+        
+        // 获取状态文本
+        function getStatusText(status) {
+            switch (status) {
+                case 'wubao': return '误报';
+                case 'zhengbao': return '正报';
+                default: return '未分类';
+            }
+        }
+        
+        // 选择图像
+        function selectImage(index) {
+            if (index < 0 || index >= currentImages.length) {
+                return;
+            }
+            
+            currentImageIndex = index;
+            updateImageList();
+            
+            // 自动滚动到选中的图像项
+            setTimeout(() => {
+                const activeItem = document.querySelector('.image-item.active');
+                if (activeItem) {
+                    activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 10);
+            
+            updateImageDisplay();
+            
+            // 不重置图像控制，而是应用全局参数
+            // 先更新UI控件以反映全局参数
+            document.getElementById('rotate-slider').value = globalImageParams.rotate;
+            document.getElementById('rotate-value').textContent = `${globalImageParams.rotate}°`;
+            document.getElementById('brightness-slider').value = globalImageParams.brightness;
+            document.getElementById('brightness-value').textContent = globalImageParams.brightness;
+            document.getElementById('contrast-slider').value = globalImageParams.contrast;
+            document.getElementById('contrast-value').textContent = globalImageParams.contrast.toFixed(1);
+            document.getElementById('grayscale-checkbox').checked = globalImageParams.grayscale;
+            
+            // 通知后端更新当前图像索引
+            fetch('/set_current_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ index: currentImageIndex })
+            });
+        }
+        
+        // 更新图像显示
+        function updateImageDisplay() {
+            const imageDisplay = document.getElementById('image-display');
+            const imageInfo = document.getElementById('image-info');
+            
+            if (currentImages.length === 0 || currentImageIndex < 0 || currentImageIndex >= currentImages.length) {
+                imageDisplay.innerHTML = `
+                    <div class="no-images">
+                        <p>暂无图像显示</p>
+                    </div>
+                `;
+                imageInfo.textContent = '请选择图像';
+                return;
+            }
+            
+            const currentImage = currentImages[currentImageIndex];
+            
+            // 直接请求应用了全局参数的图像，避免先显示原始图像再应用参数导致的闪烁
+            fetch('/apply_global_image_operations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filename: currentImage.name,
+                    params: globalImageParams,
+                    just_get: true  // 只获取处理后的图像，不保存操作
+                })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const imageUrl = URL.createObjectURL(blob);
+                imageDisplay.innerHTML = `<img src="${imageUrl}" alt="${currentImage.name}">`;
+                imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
+            })
+            .catch(() => {
+                // 回退到显示文件名
+                imageDisplay.innerHTML = `<div class="no-images"><p>${currentImage.name}</p></div>`;
+                imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
+            });
+        }
+        
+        // 更新目录显示
+        function updateDirectoryDisplay() {
+            const directoryDisplay = document.getElementById('current-directory');
+            if (currentDirectory) {
+                directoryDisplay.textContent = currentDirectory;
+            } else {
+                directoryDisplay.textContent = '未选择文件夹';
+            }
+        }
+        
+        // 设置排序顺序
+        async function setSortOrder(order) {
+            try {
+                const response = await fetch('/set_sort_order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ order })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('设置排序顺序失败');
+                }
+                
+                const data = await response.json();
+                currentImages = data.images;
+                currentSortOrder = order;
+                updateImageList();
+                
+                // 更新排序按钮样式
+                document.getElementById('sort-asc').classList.toggle('active', order === 'asc');
+                document.getElementById('sort-desc').classList.toggle('active', order === 'desc');
+            } catch (error) {
+                alert('错误: ' + error.message);
+            }
+        }
+        
+        // 更新过滤器
+        async function updateFilters() {
+            const filters = {
+                wubao: document.getElementById('filter-wubao').checked,
+                zhengbao: document.getElementById('filter-zhengbao').checked,
+                unclassified: document.getElementById('filter-unclassified').checked
+            };
+            
+            try {
+                const response = await fetch('/set_filters', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ filters })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('设置过滤器失败');
+                }
+                
+                const data = await response.json();
+                currentImages = data.images;
+                currentImageIndex = Math.min(currentImageIndex, currentImages.length - 1);
+                updateImageList();
+                updateImageDisplay();
+            } catch (error) {
+                alert('错误: ' + error.message);
+            }
+        }
+        
+        // 分类图像
+        async function classifyImage(filename, classification) {
+            try {
+                const response = await fetch('/classify_image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ filename, classification })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('分类失败');
+                }
+                
+                // WebSocket会自动更新图像列表
+            } catch (error) {
+                alert('错误: ' + error.message);
+            }
+        }
+        
+        // 清除当前图像分类
+        function clearCurrentClassification() {
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            const currentImage = currentImages[currentImageIndex];
+            classifyImage(currentImage.name, 'unclassified');
+        }
+        
+        // 清除所有图像分类
+        async function clearAllClassifications() {
+            if (!confirm('确定要清除所有图像的分类状态吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/clear_classification', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('清除分类失败');
+                }
+                
+                // WebSocket会自动更新图像列表
+            } catch (error) {
+                alert('错误: ' + error.message);
+            }
+        }
+        
+        // 应用旋转
+        function applyRotation(angle) {
+            document.getElementById('rotate-value').textContent = `${angle}°`;
+            
+            // 更新全局参数
+            globalImageParams.rotate = angle;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'rotate', 
+                    value: angle 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 应用亮度
+        function applyBrightness(value) {
+            document.getElementById('brightness-value').textContent = value;
+            
+            // 更新全局参数
+            globalImageParams.brightness = value;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'brightness', 
+                    value: value 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 应用对比度
+        function applyContrast(value) {
+            document.getElementById('contrast-value').textContent = parseFloat(value).toFixed(1);
+            
+            // 更新全局参数
+            globalImageParams.contrast = value;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'contrast', 
+                    value: value 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 应用灰度
+        function applyGrayscale(enabled) {
+            // 更新全局参数
+            globalImageParams.grayscale = enabled;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'grayscale', 
+                    value: enabled ? 'true' : 'false' 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 重置图像操作
+        function resetImageOperations() {
+            resetImageControls();
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'reset' 
+                })
+            });
+        }
+        
+        // 全局图像处理参数
+        let globalImageParams = {
+            rotate: 0,
+            brightness: 0,
+            contrast: 1,
+            grayscale: false
+        };
+
+        // 重置图像控制（仅重置全局参数，但不更新UI）
+        function resetImageControls(applyToServer = true) {
+            // 更新全局参数
+            globalImageParams = {
+                rotate: 0,
+                brightness: 0,
+                contrast: 1,
+                grayscale: false
+            };
+
+            // 更新UI控件
+            document.getElementById('rotate-slider').value = 0;
+            document.getElementById('rotate-value').textContent = '0°';
+            document.getElementById('brightness-slider').value = 0;
+            document.getElementById('brightness-value').textContent = '0';
+            document.getElementById('contrast-slider').value = 1;
+            document.getElementById('contrast-value').textContent = '1.0';
+            document.getElementById('grayscale-checkbox').checked = false;
+
+            // 可选：应用到服务器
+            if (applyToServer && currentImages.length > 0 && currentImageIndex >= 0) {
+                const currentImage = currentImages[currentImageIndex];
+                fetch('/apply_image_operation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        filename: currentImage.name, 
+                        operation: 'reset' 
+                    })
+                });
+            }
+        }
+
+        // 应用全局参数到当前图像
+        function applyGlobalParamsToCurrentImage() {
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+
+            const currentImage = currentImages[currentImageIndex];
+            
+            // 一次性应用所有参数到服务器
+            fetch('/apply_global_image_operations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filename: currentImage.name,
+                    params: globalImageParams
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 键盘事件处理
+        document.addEventListener('keydown', function(event) {
+            // 仅在没有输入框聚焦时处理键盘事件
+            if (document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text') {
+                return;
+            }
+            
+            switch (event.key) {
+                case 'ArrowUp':
+                    // 上一张图像，不循环
+                    event.preventDefault();
+                    if (currentImageIndex > 0) {
+                        selectImage(currentImageIndex - 1);
+                    }
+                    break;
+                case 'ArrowDown':
+                    // 下一张图像，不循环
+                    event.preventDefault();
+                    if (currentImageIndex < currentImages.length - 1) {
+                        selectImage(currentImageIndex + 1);
+                    }
+                    break;
+                case 'd':
+                case 'D':
+                    // 标记为误报并自动选择下一张图像
+                    if (currentImages.length > 0 && currentImageIndex >= 0) {
+                        // 设置自动选择标志，防止WebSocket更新覆盖当前选择
+                        isAutoSelecting = true;
+                        
+                        const currentImage = currentImages[currentImageIndex];
+                        classifyImage(currentImage.name, 'wubao');
+                        // 自动选择下一张图像（如果有）
+                        if (currentImageIndex < currentImages.length - 1) {
+                            selectImage(currentImageIndex + 1);
+                        }
+                    }
+                    break;
+                case 'f':
+                case 'F':
+                    // 标记为正报并自动选择下一张图像
+                    if (currentImages.length > 0 && currentImageIndex >= 0) {
+                        // 设置自动选择标志，防止WebSocket更新覆盖当前选择
+                        isAutoSelecting = true;
+                        
+                        const currentImage = currentImages[currentImageIndex];
+                        classifyImage(currentImage.name, 'zhengbao');
+                        // 自动选择下一张图像（如果有）
+                        if (currentImageIndex < currentImages.length - 1) {
+                            selectImage(currentImageIndex + 1);
+                        }
+                    }
+                    break;
+                case 'c':
+                case 'C':
+                    // 清除当前图像分类
+                    clearCurrentClassification();
+                    break;
+            }
+        });
+        
+        // 初始化
+        window.onload = function() {
+            initFrontendState();
+            initWebSocket();
+        };
+    </script>
+</body>
+</html>

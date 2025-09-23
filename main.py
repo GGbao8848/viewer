@@ -58,23 +58,35 @@ class StateManager:
                             numbers.append(float(pattern))
                         else:
                             numbers.append(int(pattern))
-                    # 组合多个数字作为排序键
-                    return tuple(numbers)
-                # 如果没有数字，按文件名本身排序
-                return (filename,)
+                    # 组合多个数字作为排序键，并添加原始文件名作为最后一个元素
+                    return tuple(numbers) + (filename,)
+                # 如果没有数字，使用一个固定的浮点数前缀和文件名作为排序键
+                return (float('-inf'), filename)
             except:
-                # 如果解析失败，回退到按文件名排序
-                return (filename,)
+                # 如果解析失败，回退到使用固定前缀和文件名作为排序键
+                return (float('-inf'), filename)
         
         for file in os.listdir(directory):
             file_path = os.path.join(directory, file)
             if os.path.isfile(file_path) and any(file.lower().endswith(ext) for ext in image_extensions):
-                # 获取更复杂的排序键
+                # 获取排序键
                 sort_key = get_sort_key(file)
                 files.append((file, sort_key))
         
         # 按排序键排序
-        files.sort(key=lambda x: x[1], reverse=self.sort_order == "desc")
+        # 使用自定义比较函数确保类型安全
+        def safe_sort_key(item):
+            key = item[1]
+            # 确保所有键都是元组
+            if not isinstance(key, tuple):
+                return (float('-inf'), str(key))
+            # 转换所有元素为字符串以确保类型安全的比较
+            safe_key = []
+            for part in key:
+                safe_key.append(str(part))
+            return tuple(safe_key)
+        
+        files.sort(key=safe_sort_key, reverse=self.sort_order == "desc")
         
         return [file for file, _ in files]
 

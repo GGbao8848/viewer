@@ -890,16 +890,11 @@
             background-color: #e9ecef;
         }
         
-        .keyboard-hint {
+        .keyboard-hint-container {
             position: fixed;
             top: 50%;
             right: 20px;
             transform: translateY(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px;
-            border-radius: 4px;
-            font-size: 12px;
             z-index: 1000;
             
             /* 在小屏幕上自动隐藏或调整位置 */
@@ -908,8 +903,47 @@
                 bottom: 20px;
                 right: 20px;
                 transform: none;
-                max-width: 80%;
             }
+        }
+        
+        .keyboard-hint {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            margin-right: 30px; /* 为按钮留出空间 */
+        }
+        
+        .keyboard-hint.hidden {
+            opacity: 0;
+            transform: translateX(100%);
+            pointer-events: none;
+        }
+        
+        .hint-toggle-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, transform 0.2s;
+            z-index: 1001;
+        }
+        
+        .hint-toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
         }
         
         .hint-title {
@@ -987,7 +1021,7 @@
                 <div class="image-info" id="image-info">
                     请选择图像
                 </div>
-                <div class="image-controls">
+                <div class="image-controls hidden">
                     <!-- 基础调整 -->
                     <div class="control-section">
                         <div class="section-title">📐 基础调整</div>
@@ -1122,15 +1156,18 @@
         </div>
     </div>
     
-    <div class="keyboard-hint">
-        <div class="hint-title">键盘快捷键:</div>
-        <div class="hint-item">↑ ↓: 上一张/下一张</div>
-        <div class="hint-item">D: 标记为误报</div>
-        <div class="hint-item">F: 标记为正报</div>
-        <div class="hint-item">C: 清除当前图像分类</div>
-        <div class="hint-item">
-            <button class="settings-btn" onclick="showShortcutSettings()" style="margin-top: 10px; padding: 4px 8px; font-size: 11px;">自定义快捷键</button>
+    <div class="keyboard-hint-container">
+        <div class="keyboard-hint">
+            <div class="hint-title">键盘快捷键:</div>
+            <div class="hint-item">↑ ↓: 上一张/下一张</div>
+            <div class="hint-item">D: 标记为误报</div>
+            <div class="hint-item">F: 标记为正报</div>
+            <div class="hint-item">C: 清除当前图像分类</div>
+            <div class="hint-item">
+                <button class="settings-btn" onclick="showShortcutSettings()" style="margin-top: 10px; padding: 4px 8px; font-size: 11px;">自定义快捷键</button>
+            </div>
         </div>
+        <button class="hint-toggle-btn" onclick="toggleHintVisibility()" title="隐藏快捷键提示">×</button>
     </div>
 
     <!-- 快捷键设置模态框 -->
@@ -1221,6 +1258,12 @@
             
             // 初始化视图模式
             toggleViewMode('list');
+            
+            // 确保控制面板默认隐藏，并更新按钮文本
+            const toggleButton = document.getElementById('controls-toggle');
+            if (toggleButton) {
+                toggleButton.textContent = '显示控制面板';
+            }
         }
         
         // 切换视图模式
@@ -1627,7 +1670,7 @@
         function updateDirectoryDisplay() {
             const directoryDisplay = document.getElementById('current-directory');
             if (currentDirectory) {
-                directoryDisplay.textContent = currentDirectory;
+                directoryDisplay.textContent = '已选择文件夹';
             } else {
                 directoryDisplay.textContent = '未选择文件夹';
             }
@@ -2391,9 +2434,33 @@
             alert('已恢复默认快捷键设置');
         }
         
+        function toggleHintVisibility() {
+            const hintElement = document.querySelector('.keyboard-hint');
+            const toggleBtn = document.querySelector('.hint-toggle-btn');
+            
+            if (hintElement.classList.contains('hidden')) {
+                // 显示快捷键提示
+                hintElement.classList.remove('hidden');
+                if (toggleBtn) {
+                    toggleBtn.textContent = '×';
+                    toggleBtn.title = '隐藏快捷键提示';
+                }
+            } else {
+                // 隐藏快捷键提示
+                hintElement.classList.add('hidden');
+                if (toggleBtn) {
+                    toggleBtn.textContent = '+';
+                    toggleBtn.title = '显示快捷键提示';
+                }
+            }
+        }
+        
         function updateShortcutHint() {
             const hintElement = document.querySelector('.keyboard-hint');
-            if (hintElement) {
+            const toggleBtn = document.querySelector('.hint-toggle-btn');
+            
+            if (hintElement && toggleBtn) {
+                const isHidden = hintElement.classList.contains('hidden');
                 hintElement.innerHTML = `
                     <div class="hint-title">键盘快捷键:</div>
                     <div class="hint-item">${shortcutConfig.prevImage}: 上一张图像</div>
@@ -2405,6 +2472,14 @@
                         <button class="settings-btn" onclick="showShortcutSettings()" style="margin-top: 10px; padding: 4px 8px; font-size: 11px;">自定义快捷键</button>
                     </div>
                 `;
+                
+                // 更新按钮状态
+                toggleBtn.textContent = isHidden ? '+' : '×';
+                toggleBtn.title = isHidden ? '显示快捷键提示' : '隐藏快捷键提示';
+                
+                if (isHidden) {
+                    hintElement.classList.add('hidden');
+                }
             }
         }
         

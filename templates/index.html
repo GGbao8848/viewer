@@ -436,6 +436,189 @@
             background-color: #138496;
         }
 
+        /* 护眼模式样式 */
+        body.eye-care {
+            background-color: #f2f2e8;
+            color: #333;
+        }
+
+        .eye-care .image-list-container,
+        .eye-care .header,
+        .eye-care .image-info,
+        .eye-care .image-controls {
+            background-color: #f9f9f0;
+        }
+
+        .eye-care .image-viewer {
+            background-color: #f2f2e8;
+        }
+
+        /* 颜色选择器样式 */
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        /* 背景设置模态框 */
+        #background-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+
+        #background-modal .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 400px;
+        }
+
+        #background-modal h3 {
+            margin-bottom: 20px;
+        }
+
+        #background-modal .setting-item {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #background-modal .setting-label {
+            font-size: 14px;
+            color: #555;
+        }
+
+        #background-modal .setting-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #background-modal .preset-colors {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        #background-modal .preset-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        #background-modal .preset-color:hover {
+            border-color: #007bff;
+        }
+
+        #background-modal .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        #background-modal .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        #background-modal .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #background-modal .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        #background-modal .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        #background-modal .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        #background-modal .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        #background-modal .btn-success:hover {
+            background-color: #1e7e34;
+        }
+        
+        /* 切换按钮样式 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #2196F3;
+        }
+
+        input:focus + .toggle-slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
         .rotate-btn {
             padding: 6px 12px;
             background-color: #f8f9fa;
@@ -487,10 +670,11 @@
         <div class="header">
             <input type="text" class="directory-input" placeholder="请输入图像文件夹路径" onkeypress="handleDirectoryInput(event)">
             <div class="header-controls">
-                <input type="text" class="search-input" placeholder="搜索文件名..." oninput="handleSearch(event)">
-                <button class="view-toggle active" onclick="toggleViewMode('list')">列表视图</button>
-                <button class="view-toggle" onclick="toggleViewMode('grid')">网格视图</button>
-            </div>
+            <input type="text" class="search-input" placeholder="搜索文件名..." oninput="handleSearch(event)">
+            <button class="view-toggle active" onclick="toggleViewMode('list')">列表视图</button>
+            <button class="view-toggle" onclick="toggleViewMode('grid')">网格视图</button>
+            <button class="settings-btn" onclick="showBackgroundSettings()">背景设置</button>
+        </div>
             <span id="current-directory" style="color: #6c757d; font-size: 12px;">未选择文件夹</span>
         </div>
         
@@ -592,6 +776,65 @@
                     </div>
                     <button class="reset-btn" onclick="resetImageOperations()">重置</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 背景设置模态框 -->
+    <div id="background-modal">
+        <div class="modal-content">
+            <h3>背景设置</h3>
+            
+            <div class="setting-item">
+                <div class="setting-label">护眼模式</div>
+                <div class="setting-controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eye-care-toggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">自定义背景色</div>
+                <div class="setting-controls">
+                    <input type="color" id="bg-color-picker" class="color-picker" value="#f5f5f5">
+                    <input type="text" id="bg-color-text" class="search-input" style="width: 120px;" value="#f5f5f5">
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">面板背景色</div>
+                <div class="setting-controls">
+                    <input type="color" id="panel-color-picker" class="color-picker" value="#ffffff">
+                    <input type="text" id="panel-color-text" class="search-input" style="width: 120px;" value="#ffffff">
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">图像查看器背景色</div>
+                <div class="setting-controls">
+                    <input type="color" id="viewer-color-picker" class="color-picker" value="#f8f9fa">
+                    <input type="text" id="viewer-color-text" class="search-input" style="width: 120px;" value="#f8f9fa">
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">预设配色</div>
+                <div class="preset-colors">
+                    <div class="preset-color" style="background-color: #f5f5f5;" data-bg="#f5f5f5" data-panel="#ffffff" data-viewer="#f8f9fa"></div>
+                    <div class="preset-color" style="background-color: #f2f2e8;" data-bg="#f2f2e8" data-panel="#f9f9f0" data-viewer="#f2f2e8"></div>
+                    <div class="preset-color" style="background-color: #e6f7ff;" data-bg="#e6f7ff" data-panel="#f0f9ff" data-viewer="#e6f7ff"></div>
+                    <div class="preset-color" style="background-color: #f6ffed;" data-bg="#f6ffed" data-panel="#f9fff0" data-viewer="#f6ffed"></div>
+                    <div class="preset-color" style="background-color: #fdf6e3;" data-bg="#fdf6e3" data-panel="#fef9e7" data-viewer="#fdf6e3"></div>
+                    <div class="preset-color" style="background-color: #f5f5f5;" data-bg="#121212" data-panel="#1e1e1e" data-viewer="#1a1a1a"></div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="resetBackgroundSettings()">恢复默认</button>
+                <button class="btn btn-primary" onclick="saveBackgroundSettings()">保存</button>
+                <button class="btn btn-success" onclick="hideBackgroundSettings()">关闭</button>
             </div>
         </div>
     </div>
@@ -1842,6 +2085,207 @@
             }
         }
         
+        // 背景设置功能
+        function showBackgroundSettings() {
+            // 加载保存的背景设置
+            loadBackgroundSettings();
+            
+            const modal = document.getElementById('background-modal');
+            modal.style.display = 'block';
+            
+            // 添加点击模态框背景关闭的功能
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    hideBackgroundSettings();
+                }
+            };
+            
+            // 添加ESC键关闭模态框的功能
+            document.addEventListener('keydown', handleBackgroundModalKeydown);
+        }
+        
+        function hideBackgroundSettings() {
+            document.getElementById('background-modal').style.display = 'none';
+            // 移除ESC键监听
+            document.removeEventListener('keydown', handleBackgroundModalKeydown);
+        }
+        
+        function handleBackgroundModalKeydown(event) {
+            if (event.key === 'Escape') {
+                hideBackgroundSettings();
+            }
+        }
+        
+        function updateColorText(colorPickerId, textInputId) {
+            const colorPicker = document.getElementById(colorPickerId);
+            const textInput = document.getElementById(textInputId);
+            textInput.value = colorPicker.value;
+        }
+        
+        function updateColorPicker(colorPickerId, textInputId) {
+            const colorPicker = document.getElementById(colorPickerId);
+            const textInput = document.getElementById(textInputId);
+            
+            // 验证颜色格式
+            if (/^#[0-9A-F]{6}$/i.test(textInput.value)) {
+                colorPicker.value = textInput.value;
+            } else {
+                // 颜色格式不正确，恢复到当前值
+                textInput.value = colorPicker.value;
+            }
+        }
+        
+        function applyBackgroundSettings() {
+            const eyeCareToggle = document.getElementById('eye-care-toggle');
+            const bgColorPicker = document.getElementById('bg-color-picker');
+            const panelColorPicker = document.getElementById('panel-color-picker');
+            const viewerColorPicker = document.getElementById('viewer-color-picker');
+            
+            // 应用护眼模式
+            document.body.classList.toggle('eye-care', eyeCareToggle.checked);
+            
+            // 如果不是护眼模式，则应用自定义颜色
+            if (!eyeCareToggle.checked) {
+                document.body.style.backgroundColor = bgColorPicker.value;
+                document.body.style.color = '';
+                
+                // 更新面板颜色
+                document.querySelectorAll('.image-list-container, .header, .image-info, .image-controls').forEach(el => {
+                    el.style.backgroundColor = panelColorPicker.value;
+                });
+                
+                // 更新图像查看器颜色
+                document.querySelectorAll('.image-viewer').forEach(el => {
+                    el.style.backgroundColor = viewerColorPicker.value;
+                });
+            } else {
+                // 护眼模式下重置自定义颜色
+                document.body.style.backgroundColor = '';
+                document.body.style.color = '';
+                
+                document.querySelectorAll('.image-list-container, .header, .image-info, .image-controls').forEach(el => {
+                    el.style.backgroundColor = '';
+                });
+                
+                document.querySelectorAll('.image-viewer').forEach(el => {
+                    el.style.backgroundColor = '';
+                });
+            }
+        }
+        
+        function saveBackgroundSettings() {
+            const eyeCareToggle = document.getElementById('eye-care-toggle');
+            const bgColorPicker = document.getElementById('bg-color-picker');
+            const panelColorPicker = document.getElementById('panel-color-picker');
+            const viewerColorPicker = document.getElementById('viewer-color-picker');
+            
+            const settings = {
+                eyeCare: eyeCareToggle.checked,
+                bgColor: bgColorPicker.value,
+                panelColor: panelColorPicker.value,
+                viewerColor: viewerColorPicker.value
+            };
+            
+            // 保存到localStorage
+            localStorage.setItem('backgroundSettings', JSON.stringify(settings));
+            
+            // 应用设置
+            applyBackgroundSettings();
+            
+            hideBackgroundSettings();
+        }
+        
+        function loadBackgroundSettings() {
+            const savedSettings = localStorage.getItem('backgroundSettings');
+            const defaultSettings = {
+                eyeCare: false,
+                bgColor: '#f5f5f5',
+                panelColor: '#ffffff',
+                viewerColor: '#f8f9fa'
+            };
+            
+            const settings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+            
+            // 填充表单
+            document.getElementById('eye-care-toggle').checked = settings.eyeCare;
+            document.getElementById('bg-color-picker').value = settings.bgColor;
+            document.getElementById('bg-color-text').value = settings.bgColor;
+            document.getElementById('panel-color-picker').value = settings.panelColor;
+            document.getElementById('panel-color-text').value = settings.panelColor;
+            document.getElementById('viewer-color-picker').value = settings.viewerColor;
+            document.getElementById('viewer-color-text').value = settings.viewerColor;
+        }
+        
+        function resetBackgroundSettings() {
+            const defaultSettings = {
+                eyeCare: false,
+                bgColor: '#f5f5f5',
+                panelColor: '#ffffff',
+                viewerColor: '#f8f9fa'
+            };
+            
+            // 更新表单
+            document.getElementById('eye-care-toggle').checked = defaultSettings.eyeCare;
+            document.getElementById('bg-color-picker').value = defaultSettings.bgColor;
+            document.getElementById('bg-color-text').value = defaultSettings.bgColor;
+            document.getElementById('panel-color-picker').value = defaultSettings.panelColor;
+            document.getElementById('panel-color-text').value = defaultSettings.panelColor;
+            document.getElementById('viewer-color-picker').value = defaultSettings.viewerColor;
+            document.getElementById('viewer-color-text').value = defaultSettings.viewerColor;
+        }
+        
+        // 添加预设颜色点击事件
+        function setupPresetColorListeners() {
+            document.querySelectorAll('.preset-color').forEach(color => {
+                color.addEventListener('click', function() {
+                    const bgColor = this.getAttribute('data-bg');
+                    const panelColor = this.getAttribute('data-panel');
+                    const viewerColor = this.getAttribute('data-viewer');
+                    
+                    document.getElementById('bg-color-picker').value = bgColor;
+                    document.getElementById('bg-color-text').value = bgColor;
+                    document.getElementById('panel-color-picker').value = panelColor;
+                    document.getElementById('panel-color-text').value = panelColor;
+                    document.getElementById('viewer-color-picker').value = viewerColor;
+                    document.getElementById('viewer-color-text').value = viewerColor;
+                    
+                    // 关闭护眼模式，应用预设颜色
+                    document.getElementById('eye-care-toggle').checked = false;
+                });
+            });
+        }
+        
+        // 添加颜色选择器事件监听
+        function setupColorPickerListeners() {
+            document.getElementById('bg-color-picker').addEventListener('input', function() {
+                updateColorText('bg-color-picker', 'bg-color-text');
+            });
+            
+            document.getElementById('bg-color-text').addEventListener('blur', function() {
+                updateColorPicker('bg-color-picker', 'bg-color-text');
+            });
+            
+            document.getElementById('panel-color-picker').addEventListener('input', function() {
+                updateColorText('panel-color-picker', 'panel-color-text');
+            });
+            
+            document.getElementById('panel-color-text').addEventListener('blur', function() {
+                updateColorPicker('panel-color-picker', 'panel-color-text');
+            });
+            
+            document.getElementById('viewer-color-picker').addEventListener('input', function() {
+                updateColorText('viewer-color-picker', 'viewer-color-text');
+            });
+            
+            document.getElementById('viewer-color-text').addEventListener('blur', function() {
+                updateColorPicker('viewer-color-picker', 'viewer-color-text');
+            });
+            
+            document.getElementById('eye-care-toggle').addEventListener('change', function() {
+                applyBackgroundSettings();
+            });
+        }
+        
         // 初始化
         window.onload = function() {
             initFrontendState();
@@ -1849,6 +2293,14 @@
             // 加载快捷键配置
             loadShortcuts();
             updateShortcutHint();
+            
+            // 设置颜色选择器事件监听
+            setupColorPickerListeners();
+            setupPresetColorListeners();
+            
+            // 应用保存的背景设置
+            loadBackgroundSettings();
+            applyBackgroundSettings();
         };
     </script>
 </body>

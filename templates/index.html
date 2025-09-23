@@ -389,6 +389,7 @@
             flex-direction: column;
             background-color: #f8f9fa;
             min-width: 0;
+            position: relative;
         }
         
         .image-display {
@@ -397,8 +398,9 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            padding: 20px;
+            padding: 15px;
             min-height: 0;
+            order: 1;
         }
         
         .image-display img {
@@ -410,41 +412,173 @@
         }
         
         .image-info {
-            padding: 15px 20px;
+            padding: 10px 15px;
             background-color: #fff;
             border-top: 1px solid #ddd;
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
+            order: 2;
         }
         
+        /* 图像处理面板优化 */
         .image-controls {
-            padding: 15px 20px;
+            padding: 15px;
             background-color: #fff;
             border-top: 1px solid #ddd;
             display: flex;
-            gap: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-start;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+            max-height: 250px;
+            overflow-y: auto;
+            order: 3;
+            transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        /* 隐藏状态的样式 */
+        .image-controls.hidden {
+            max-height: 0;
+            padding: 0;
+            opacity: 0;
+            transform: translateY(10px);
+            overflow: hidden;
+            border-top: none;
+            box-shadow: none;
+        }
+        
+        /* 控制切换按钮样式 */
+        .controls-toggle-btn {
+            position: absolute;
+            bottom: 0;
+            right: 20px;
+            transform: translateY(50%);
+            padding: 6px 12px;
+            background-color: #007bff;
+            color: white;
+            border: 1px solid #0056b3;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .controls-toggle-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .controls-toggle-btn.hidden {
+            transform: translateY(-50%);
+            border-radius: 0 0 5px 5px;
+        }
+        
+        /* 图像处理分组容器 */
+        .control-section {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            flex: 1;
+            min-width: 240px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .control-section:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .section-title {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 13px;
+            display: flex;
             align-items: center;
+            gap: 5px;
         }
         
         .control-group {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
         }
         
         .control-label {
-            font-size: 14px;
-            color: #555;
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: 500;
+            min-width: 50px;
         }
         
         .control-slider {
-            width: 150px;
+            width: 100px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 2px;
+            outline: none;
+            transition: background 0.2s;
+        }
+        
+        .control-slider:hover {
+            background: #ccc;
+        }
+        
+        .control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+        
+        .control-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0, 123, 255, 0.4);
         }
         
         .control-checkbox {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            font-size: 13px;
+            color: #495057;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .control-checkbox:hover {
+            color: #007bff;
+        }
+        
+        .control-checkbox input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            min-width: 35px;
+            font-size: 12px;
+            color: #007bff;
+            font-weight: 600;
+            text-align: right;
         }
         
         .reset-btn {
@@ -452,14 +586,96 @@
             background-color: #6c757d;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            align-self: flex-end;
+            white-space: nowrap;
         }
         
         .reset-btn:hover {
             background-color: #5a6268;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .reset-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 调整数值输入框样式 */
+        input[type="number"] {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+        
+        /* 按钮组样式优化 */
+        .rotate-btn {
+            padding: 6px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #495057;
+        }
+        
+        .rotate-btn:hover {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+        }
+        
+        /* 响应式设计优化 */
+        @media (max-width: 1200px) {
+            .control-section {
+                min-width: 220px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .image-controls {
+                padding: 12px;
+                gap: 8px;
+                max-height: 200px;
+            }
+            
+            .control-section {
+                min-width: 100%;
+                margin-right: 0;
+                padding: 10px;
+            }
+            
+            .control-group {
+                justify-content: space-between;
+                gap: 6px;
+            }
+            
+            .control-slider {
+                width: 90px;
+            }
+            
+            .reset-btn {
+                width: 100%;
+                order: 99;
+                padding: 10px;
+            }
         }
 
         .settings-btn {
@@ -724,6 +940,7 @@
             <button class="view-toggle active" onclick="toggleViewMode('list')">列表视图</button>
             <button class="view-toggle" onclick="toggleViewMode('grid')">网格视图</button>
             <button class="settings-btn" onclick="showBackgroundSettings()">背景设置</button>
+            <button class="settings-btn" id="controls-toggle" onclick="toggleControlsVisibility()">隐藏控制面板</button>
         </div>
             <span id="current-directory" style="color: #6c757d; font-size: 12px;">未选择文件夹</span>
         </div>
@@ -771,60 +988,76 @@
                     请选择图像
                 </div>
                 <div class="image-controls">
-                    <div class="control-group">
-                        <label class="control-label">旋转:</label>
-                        <input type="range" class="control-slider" id="rotate-slider" min="-180" max="180" value="0" oninput="applyRotation(this.value)">
-                        <span id="rotate-value">0°</span>
-                        <button class="rotate-btn" onclick="rotate90('counterclockwise')">↺ 90°</button>
-                        <button class="rotate-btn" onclick="rotate90('clockwise')">↻ 90°</button>
+                    <!-- 基础调整 -->
+                    <div class="control-section">
+                        <div class="section-title">📐 基础调整</div>
+                        <div class="control-group">
+                            <label class="control-label">旋转:</label>
+                            <input type="range" class="control-slider" id="rotate-slider" min="-180" max="180" value="0" oninput="applyRotation(this.value)">
+                            <span id="rotate-value" class="slider-value">0°</span>
+                            <button class="rotate-btn" onclick="rotate90('counterclockwise')">↺ 90°</button>
+                            <button class="rotate-btn" onclick="rotate90('clockwise')">↻ 90°</button>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">亮度:</label>
+                            <input type="range" class="control-slider" id="brightness-slider" min="-100" max="100" value="0" oninput="applyBrightness(this.value)">
+                            <span id="brightness-value" class="slider-value">0</span>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">对比度:</label>
+                            <input type="range" class="control-slider" id="contrast-slider" min="0" max="3" step="0.1" value="1" oninput="applyContrast(this.value)">
+                            <span id="contrast-value" class="slider-value">1.0</span>
+                        </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label">亮度:</label>
-                        <input type="range" class="control-slider" id="brightness-slider" min="-100" max="100" value="0" oninput="applyBrightness(this.value)">
-                        <span id="brightness-value">0</span>
+                    
+                    <!-- 图像增强 -->
+                    <div class="control-section">
+                        <div class="section-title">✨ 图像增强</div>
+                        <div class="control-group">
+                            <label class="control-checkbox">
+                                <input type="checkbox" id="grayscale-checkbox" onchange="applyGrayscale(this.checked)">
+                                灰度图
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-checkbox">
+                                <input type="checkbox" id="adaptive-threshold-checkbox" onchange="applyAdaptiveThreshold(this.checked)">
+                                自适应二值化
+                            </label>
+                            <input type="number" id="adaptive-threshold-blocksize" min="3" max="31" step="2" value="11" onchange="updateAdaptiveThresholdParams()">
+                            <input type="number" id="adaptive-threshold-c" min="-10" max="10" value="2" onchange="updateAdaptiveThresholdParams()">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-checkbox">
+                                <input type="checkbox" id="denoise-checkbox" onchange="applyDenoise(this.checked)">
+                                去噪声
+                            </label>
+                            <input type="range" id="denoise-strength" min="1" max="20" value="10" oninput="updateDenoiseParams()" style="width: 80px;">
+                            <span id="denoise-strength-value" class="slider-value">10</span>
+                        </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label">对比度:</label>
-                        <input type="range" class="control-slider" id="contrast-slider" min="0" max="3" step="0.1" value="1" oninput="applyContrast(this.value)">
-                        <span id="contrast-value">1.0</span>
+                    
+                    <!-- 形态学操作 -->
+                    <div class="control-section">
+                        <div class="section-title">🔧 形态学操作</div>
+                        <div class="control-group">
+                            <label class="control-checkbox">
+                                <input type="checkbox" id="closing-checkbox" onchange="applyClosing(this.checked)">
+                                闭运算
+                            </label>
+                            <input type="number" id="closing-kernel-size" min="1" max="10" value="3" onchange="updateClosingParams()">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-checkbox">
+                                <input type="checkbox" id="opening-checkbox" onchange="applyOpening(this.checked)">
+                                开运算
+                            </label>
+                            <input type="number" id="opening-kernel-size" min="1" max="10" value="3" onchange="updateOpeningParams()">
+                        </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-checkbox">
-                            <input type="checkbox" id="grayscale-checkbox" onchange="applyGrayscale(this.checked)">
-                            灰度图
-                        </label>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-checkbox">
-                            <input type="checkbox" id="adaptive-threshold-checkbox" onchange="applyAdaptiveThreshold(this.checked)">
-                            自适应二值化
-                        </label>
-                        <input type="number" id="adaptive-threshold-blocksize" min="3" max="31" step="2" value="11" onchange="updateAdaptiveThresholdParams()" style="width: 50px;">
-                        <input type="number" id="adaptive-threshold-c" min="-10" max="10" value="2" onchange="updateAdaptiveThresholdParams()" style="width: 50px;">
-                    </div>
-                    <div class="control-group">
-                        <label class="control-checkbox">
-                            <input type="checkbox" id="denoise-checkbox" onchange="applyDenoise(this.checked)">
-                            去噪声
-                        </label>
-                        <input type="range" id="denoise-strength" min="1" max="20" value="10" oninput="updateDenoiseParams()" style="width: 80px;">
-                        <span id="denoise-strength-value">10</span>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-checkbox">
-                            <input type="checkbox" id="closing-checkbox" onchange="applyClosing(this.checked)">
-                            闭运算
-                        </label>
-                        <input type="number" id="closing-kernel-size" min="1" max="10" value="3" onchange="updateClosingParams()" style="width: 50px;">
-                    </div>
-                    <div class="control-group">
-                        <label class="control-checkbox">
-                            <input type="checkbox" id="opening-checkbox" onchange="applyOpening(this.checked)">
-                            开运算
-                        </label>
-                        <input type="number" id="opening-kernel-size" min="1" max="10" value="3" onchange="updateOpeningParams()" style="width: 50px;">
-                    </div>
-                    <button class="reset-btn" onclick="resetImageOperations()">重置</button>
+                    
+                    <!-- 重置按钮 -->
+                    <button class="reset-btn" onclick="resetImageOperations()">🔄 重置所有操作</button>
                 </div>
             </div>
         </div>
@@ -959,6 +1192,22 @@
             markZhengbao: 'f',
             clearClassification: 'c'
         };
+        
+        // 切换控制面板可见性
+        function toggleControlsVisibility() {
+            const controlsElement = document.querySelector('.image-controls');
+            const toggleButton = document.getElementById('controls-toggle');
+            
+            if (controlsElement.classList.contains('hidden')) {
+                // 显示控制面板
+                controlsElement.classList.remove('hidden');
+                toggleButton.textContent = '隐藏控制面板';
+            } else {
+                // 隐藏控制面板
+                controlsElement.classList.add('hidden');
+                toggleButton.textContent = '显示控制面板';
+            }
+        }
         
         // 初始化前端状态
         function initFrontendState() {

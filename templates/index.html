@@ -23,6 +23,7 @@
             flex-direction: column;
             height: 100vh;
             width: 100vw;
+            min-height: 0;
         }
         
         .header {
@@ -90,15 +91,42 @@
             flex: 1;
             display: flex;
             overflow: hidden;
+            min-height: 0;
         }
         
         .image-list-container {
             width: 250px;
+            max-width: 30%;
             background-color: #fff;
             border-right: 1px solid #ddd;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        /* 响应式设计调整 */
+        @media (max-width: 768px) {
+            .image-list-container {
+                width: 200px;
+                max-width: 40%;
+            }
+            
+            .header {
+                flex-wrap: wrap;
+            }
+            
+            .directory-input {
+                order: -1;
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .image-list-container {
+                width: 160px;
+                max-width: 45%;
+            }
         }
         
         .list-header {
@@ -168,6 +196,17 @@
             align-items: center;
             gap: 5px;
             font-size: 12px;
+        }
+        
+        .status-count {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 16px;
+            text-align: center;
         }
         
         .image-list {
@@ -349,6 +388,7 @@
             display: flex;
             flex-direction: column;
             background-color: #f8f9fa;
+            min-width: 0;
         }
         
         .image-display {
@@ -358,6 +398,7 @@
             align-items: center;
             overflow: hidden;
             padding: 20px;
+            min-height: 0;
         }
         
         .image-display img {
@@ -644,6 +685,15 @@
             border-radius: 4px;
             font-size: 12px;
             z-index: 1000;
+            
+            /* 在小屏幕上自动隐藏或调整位置 */
+            @media (max-width: 768px) {
+                top: auto;
+                bottom: 20px;
+                right: 20px;
+                transform: none;
+                max-width: 80%;
+            }
         }
         
         .hint-title {
@@ -692,15 +742,15 @@
                     <div class="filter-controls">
                         <label class="filter-checkbox">
                             <input type="checkbox" id="filter-wubao" onchange="updateFilters()">
-                            误报
+                            误报 <span class="status-count" id="count-wubao">0</span>
                         </label>
                         <label class="filter-checkbox">
                             <input type="checkbox" id="filter-zhengbao" onchange="updateFilters()">
-                            正报
+                            正报 <span class="status-count" id="count-zhengbao">0</span>
                         </label>
                         <label class="filter-checkbox">
                             <input type="checkbox" id="filter-unclassified" checked onchange="updateFilters()">
-                            未分类
+                            未分类 <span class="status-count" id="count-unclassified">0</span>
                         </label>
                     </div>
                 </div>
@@ -1072,8 +1122,32 @@
                         <p>请输入文件夹路径以加载图像</p>
                     </div>
                 `;
+                // 更新计数显示为0
+                document.getElementById('count-wubao').textContent = '0';
+                document.getElementById('count-zhengbao').textContent = '0';
+                document.getElementById('count-unclassified').textContent = '0';
                 return;
             }
+            
+            // 计算各状态图像数量
+            const statusCount = {
+                wubao: 0,
+                zhengbao: 0,
+                unclassified: 0
+            };
+            
+            currentImages.forEach(image => {
+                if (statusCount.hasOwnProperty(image.status)) {
+                    statusCount[image.status]++;
+                } else {
+                    statusCount.unclassified++;
+                }
+            });
+            
+            // 更新计数显示
+            document.getElementById('count-wubao').textContent = statusCount.wubao;
+            document.getElementById('count-zhengbao').textContent = statusCount.zhengbao;
+            document.getElementById('count-unclassified').textContent = statusCount.unclassified;
             
             const filteredImages = getFilteredImages();
             

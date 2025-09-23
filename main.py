@@ -41,7 +41,7 @@ class StateManager:
             return []
         
         # 过滤图像文件
-        image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff']
+        image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.tif']
         files = []
         
         def get_sort_key(filename):
@@ -220,7 +220,18 @@ class StateManager:
             height, width = image.shape[:2]
             center = (width // 2, height // 2)
             rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
-            image = cv2.warpAffine(image, rotation_matrix, (width, height))
+            
+            # 计算旋转后的边界框尺寸，避免图像被裁剪
+            cos_angle = abs(np.cos(np.radians(angle)))
+            sin_angle = abs(np.sin(np.radians(angle)))
+            new_width = int((height * sin_angle) + (width * cos_angle))
+            new_height = int((height * cos_angle) + (width * sin_angle))
+            
+            # 调整旋转矩阵的平移分量
+            rotation_matrix[0, 2] += (new_width / 2) - center[0]
+            rotation_matrix[1, 2] += (new_height / 2) - center[1]
+            
+            image = cv2.warpAffine(image, rotation_matrix, (new_width, new_height))
         
         # 灰度操作
         if "grayscale" in operations and operations["grayscale"]:
@@ -233,6 +244,69 @@ class StateManager:
             contrast = operations.get("contrast", 1.0)
             image = cv2.convertScaleAbs(image, alpha=contrast, beta=brightness)
         
+        # 自适应二值化操作
+        if "adaptive_threshold" in operations and operations["adaptive_threshold"]:
+            # 转换为灰度图
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            # 获取参数
+            block_size = operations.get("adaptive_threshold_blockSize", 11)
+            c = operations.get("adaptive_threshold_c", 2)
+            # 确保block_size是奇数
+            block_size = max(3, block_size)
+            if block_size % 2 == 0:
+                block_size += 1
+            # 应用自适应二值化
+            binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                         cv2.THRESH_BINARY, block_size, c)
+            # 转回RGB
+            image = cv2.cvtColor(binary, cv2.COLOR_GRAY2RGB)
+        
+        # 去噪声操作
+        if "denoise" in operations and operations["denoise"]:
+            strength = operations.get("denoise_strength", 10)
+            # 应用非局部均值去噪
+            image = cv2.fastNlMeansDenoisingColored(image, None, strength, strength, 7, 21)
+        
+        # 闭运算操作
+        if "closing" in operations and operations["closing"]:
+            kernel_size = operations.get("closing_kernelSize", 3)
+            kernel = np.ones((kernel_size, kernel_size), np.uint8)
+            image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+        
+        # 开运算操作
+        if "opening" in operations and operations["opening"]:
+            kernel_size = operations.get("opening_kernelSize", 3)
+            kernel = np.ones((kernel_size, kernel_size), np.uint8)
+            image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+        
+        return image
+
+    def generate_thumbnail(self, filename, max_width=200, max_height=150):
+        """生成缩略图"""
+        image_path = self.get_image_path(filename)
+        if not os.path.exists(image_path):
+            return None
+        
+        # 读取原始图像
+        image = cv2.imread(image_path)
+        if image is None:
+            return None
+        
+        # 转换为RGB格式
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # 计算缩略图尺寸
+        height, width = image.shape[:2]
+        
+        # 计算缩放比例
+        scale = min(max_width / width, max_height / height)
+        new_width = int(width * scale)
+        new_height = int(height * scale)
+        
+        # 调整图像大小
+        if scale < 1.0:
+            image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+        
         return image
 
 # 监控文件系统变化的处理器
@@ -244,7 +318,7 @@ class ImageFileEventHandler(FileSystemEventHandler):
         # 只处理文件创建、修改、删除事件，且不处理目录
         if not event.is_directory and isinstance(event, (FileModifiedEvent, FileCreatedEvent, FileDeletedEvent)):
             # 检查是否为图像文件
-            image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff']
+            image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.tif']
             if any(event.src_path.lower().endswith(ext) for ext in image_extensions):
                 self.state_manager.update_image_files()
 
@@ -306,16 +380,29 @@ def get_current_image():
 
 @app.post("/apply_image_operation")
 def apply_image_operation(filename: str = Body(..., embed=True), operation: str = Body(..., embed=True), value: str = Body(None, embed=True)):
-    if operation == "rotate":
-        value = float(value) if value else 0
+    # 处理可能的None值
+    if value is None:
+        processed_value = None
+    elif operation == "rotate":
+        processed_value = float(value) if value else 0
     elif operation == "grayscale":
-        value = value.lower() == "true"
+        processed_value = value.lower() == "true"
     elif operation == "brightness":
-        value = int(value) if value else 0
+        processed_value = int(value) if value else 0
     elif operation == "contrast":
-        value = float(value) if value else 1.0
+        processed_value = float(value) if value else 1.0
+    elif operation == "adaptive_threshold":
+        processed_value = value.lower() == "true"
+    elif operation == "denoise":
+        processed_value = value.lower() == "true"
+    elif operation == "closing":
+        processed_value = value.lower() == "true"
+    elif operation == "opening":
+        processed_value = value.lower() == "true"
+    else:
+        processed_value = value
     
-    state_manager.apply_image_operation(filename, operation, value)
+    state_manager.apply_image_operation(filename, operation, processed_value)
     return {"status": "success"}
 
 @app.post("/apply_global_image_operations")
@@ -334,6 +421,19 @@ def apply_global_image_operations(filename: str = Body(..., embed=True), params:
             temp_operations["contrast"] = float(params["contrast"])
         if "grayscale" in params:
             temp_operations["grayscale"] = params["grayscale"]
+        if "adaptiveThreshold" in params:
+            temp_operations["adaptive_threshold"] = params["adaptiveThreshold"]
+            temp_operations["adaptive_threshold_blockSize"] = params.get("adaptiveThresholdBlockSize", 11)
+            temp_operations["adaptive_threshold_c"] = params.get("adaptiveThresholdC", 2)
+        if "denoise" in params:
+            temp_operations["denoise"] = params["denoise"]
+            temp_operations["denoise_strength"] = params.get("denoiseStrength", 10)
+        if "closing" in params:
+            temp_operations["closing"] = params["closing"]
+            temp_operations["closing_kernelSize"] = params.get("closingKernelSize", 3)
+        if "opening" in params:
+            temp_operations["opening"] = params["opening"]
+            temp_operations["opening_kernelSize"] = params.get("openingKernelSize", 3)
         
         # 获取处理后的图像
         image = state_manager.get_image_with_operations(filename, temp_operations)
@@ -359,6 +459,19 @@ def apply_global_image_operations(filename: str = Body(..., embed=True), params:
             state_manager.apply_image_operation(filename, "contrast", float(params["contrast"]))
         if "grayscale" in params:
             state_manager.apply_image_operation(filename, "grayscale", params["grayscale"])
+        if "adaptiveThreshold" in params:
+            state_manager.apply_image_operation(filename, "adaptive_threshold", params["adaptiveThreshold"])
+            state_manager.apply_image_operation(filename, "adaptive_threshold_blockSize", params.get("adaptiveThresholdBlockSize", 11))
+            state_manager.apply_image_operation(filename, "adaptive_threshold_c", params.get("adaptiveThresholdC", 2))
+        if "denoise" in params:
+            state_manager.apply_image_operation(filename, "denoise", params["denoise"])
+            state_manager.apply_image_operation(filename, "denoise_strength", params.get("denoiseStrength", 10))
+        if "closing" in params:
+            state_manager.apply_image_operation(filename, "closing", params["closing"])
+            state_manager.apply_image_operation(filename, "closing_kernelSize", params.get("closingKernelSize", 3))
+        if "opening" in params:
+            state_manager.apply_image_operation(filename, "opening", params["opening"])
+            state_manager.apply_image_operation(filename, "opening_kernelSize", params.get("openingKernelSize", 3))
         
         return {"status": "success"}
 
@@ -366,6 +479,17 @@ def apply_global_image_operations(filename: str = Body(..., embed=True), params:
 def get_processed_image(filename: str):
     # 使用默认参数调用，确保与修改后的函数兼容
     image = state_manager.get_image_with_operations(filename, None)
+    if image is None:
+        raise HTTPException(status_code=404, detail="图像未找到")
+    
+    # 将图像转换为字节流
+    _, buffer = cv2.imencode('.jpg', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+    return Response(content=buffer.tobytes(), media_type="image/jpeg")
+
+@app.get("/get_thumbnail")
+def get_thumbnail(filename: str):
+    """获取缩略图"""
+    image = state_manager.generate_thumbnail(filename)
     if image is None:
         raise HTTPException(status_code=404, detail="图像未找到")
     

@@ -34,6 +34,45 @@
             gap: 15px;
         }
         
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .search-input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .view-toggle {
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .view-toggle:hover {
+            background-color: #e9ecef;
+        }
+        
+        .view-toggle.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
         .directory-input {
             flex: 1;
             padding: 10px;
@@ -134,7 +173,7 @@
         .image-list {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 0;
             border: 1px solid #ddd;
             border-radius: 4px;
             background-color: #fff;
@@ -143,7 +182,7 @@
         /* 图像列表标题行 */
         .list-header-row {
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: 60px 1fr auto;
             padding: 8px 10px;
             font-weight: bold;
             background-color: #f8f9fa;
@@ -154,7 +193,7 @@
         
         .image-item {
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: 60px 1fr auto;
             padding: 8px 10px;
             margin: 0;
             border: none;
@@ -164,6 +203,7 @@
             background-color: #fff;
             transition: all 0.2s;
             align-items: center;
+            gap: 8px;
         }
         
         /* 移除最后一项的底边框 */
@@ -185,6 +225,87 @@
             font-size: 10px;
             font-weight: bold;
             white-space: nowrap;
+        }
+        
+        .image-thumbnail {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        
+        .image-thumbnail img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+            border-radius: 3px;
+        }
+        
+        /* 网格视图样式 */
+        .grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            padding: 12px;
+        }
+        
+        .grid-item {
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .grid-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .grid-item.active {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .grid-thumbnail {
+            width: 100%;
+            height: 100px;
+            overflow: hidden;
+            background-color: #f8f9fa;
+        }
+        
+        .grid-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .grid-info {
+            padding: 8px;
+            font-size: 11px;
+        }
+        
+        .grid-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        
+        .grid-status {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: bold;
         }
         
         .image-name {
@@ -300,6 +421,21 @@
             background-color: #5a6268;
         }
 
+        .settings-btn {
+            padding: 6px 12px;
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .settings-btn:hover {
+            background-color: #138496;
+        }
+
         .rotate-btn {
             padding: 6px 12px;
             background-color: #f8f9fa;
@@ -350,6 +486,11 @@
     <div class="container">
         <div class="header">
             <input type="text" class="directory-input" placeholder="请输入图像文件夹路径" onkeypress="handleDirectoryInput(event)">
+            <div class="header-controls">
+                <input type="text" class="search-input" placeholder="搜索文件名..." oninput="handleSearch(event)">
+                <button class="view-toggle active" onclick="toggleViewMode('list')">列表视图</button>
+                <button class="view-toggle" onclick="toggleViewMode('grid')">网格视图</button>
+            </div>
             <span id="current-directory" style="color: #6c757d; font-size: 12px;">未选择文件夹</span>
         </div>
         
@@ -419,6 +560,36 @@
                             灰度图
                         </label>
                     </div>
+                    <div class="control-group">
+                        <label class="control-checkbox">
+                            <input type="checkbox" id="adaptive-threshold-checkbox" onchange="applyAdaptiveThreshold(this.checked)">
+                            自适应二值化
+                        </label>
+                        <input type="number" id="adaptive-threshold-blocksize" min="3" max="31" step="2" value="11" onchange="updateAdaptiveThresholdParams()" style="width: 50px;">
+                        <input type="number" id="adaptive-threshold-c" min="-10" max="10" value="2" onchange="updateAdaptiveThresholdParams()" style="width: 50px;">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-checkbox">
+                            <input type="checkbox" id="denoise-checkbox" onchange="applyDenoise(this.checked)">
+                            去噪声
+                        </label>
+                        <input type="range" id="denoise-strength" min="1" max="20" value="10" oninput="updateDenoiseParams()" style="width: 80px;">
+                        <span id="denoise-strength-value">10</span>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-checkbox">
+                            <input type="checkbox" id="closing-checkbox" onchange="applyClosing(this.checked)">
+                            闭运算
+                        </label>
+                        <input type="number" id="closing-kernel-size" min="1" max="10" value="3" onchange="updateClosingParams()" style="width: 50px;">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-checkbox">
+                            <input type="checkbox" id="opening-checkbox" onchange="applyOpening(this.checked)">
+                            开运算
+                        </label>
+                        <input type="number" id="opening-kernel-size" min="1" max="10" value="3" onchange="updateOpeningParams()" style="width: 50px;">
+                    </div>
                     <button class="reset-btn" onclick="resetImageOperations()">重置</button>
                 </div>
             </div>
@@ -431,6 +602,49 @@
         <div class="hint-item">D: 标记为误报</div>
         <div class="hint-item">F: 标记为正报</div>
         <div class="hint-item">C: 清除当前图像分类</div>
+        <div class="hint-item">
+            <button class="settings-btn" onclick="showShortcutSettings()" style="margin-top: 10px; padding: 4px 8px; font-size: 11px;">自定义快捷键</button>
+        </div>
+    </div>
+
+    <!-- 快捷键设置模态框 -->
+    <div id="shortcut-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 2000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; min-width: 400px;">
+            <h3 style="margin-bottom: 20px;">自定义快捷键</h3>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">上一张图像:</label>
+                <input type="text" id="shortcut-prev" class="shortcut-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onkeydown="return handleShortcutInput(event, this)" placeholder="按任意键设置快捷键">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">下一张图像:</label>
+                <input type="text" id="shortcut-next" class="shortcut-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onkeydown="return handleShortcutInput(event, this)" placeholder="按任意键设置快捷键">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">标记为误报:</label>
+                <input type="text" id="shortcut-wubao" class="shortcut-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onkeydown="return handleShortcutInput(event, this)" placeholder="按任意键设置快捷键">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">标记为正报:</label>
+                <input type="text" id="shortcut-zhengbao" class="shortcut-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onkeydown="return handleShortcutInput(event, this)" placeholder="按任意键设置快捷键">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px;">清除当前分类:</label>
+                <input type="text" id="shortcut-clear" class="shortcut-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onkeydown="return handleShortcutInput(event, this)" placeholder="按任意键设置快捷键">
+            </div>
+            <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; font-size: 12px; color: #6c757d;">
+                <strong>使用说明:</strong><br>
+                • 点击输入框后按任意键设置快捷键<br>
+                • 支持字母键、数字键和功能键（如 ArrowUp）<br>
+                • 空格键显示为 "Space"<br>
+                • 每个快捷键必须是唯一的
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="saveShortcuts()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">保存</button>
+                <button onclick="testShortcuts()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">测试</button>
+                <button onclick="resetShortcuts()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">恢复默认</button>
+                <button onclick="hideShortcutSettings()" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -440,6 +654,18 @@
         let websocket = null;
         let currentSortOrder = 'desc';
         let isAutoSelecting = false; // 标记是否正在自动选择下一张图像
+        let thumbnailCache = new Map(); // 缩略图缓存
+        let viewMode = 'list'; // 视图模式: 'list' 或 'grid'
+        let searchQuery = ''; // 搜索查询
+        
+        // 快捷键配置
+        let shortcutConfig = {
+            prevImage: 'ArrowUp',
+            nextImage: 'ArrowDown',
+            markWubao: 'd',
+            markZhengbao: 'f',
+            clearClassification: 'c'
+        };
         
         // 初始化前端状态
         function initFrontendState() {
@@ -447,6 +673,43 @@
             document.getElementById('filter-wubao').checked = true;
             document.getElementById('filter-zhengbao').checked = true;
             document.getElementById('filter-unclassified').checked = true;
+            
+            // 设置滚动监听器
+            setupScrollListener();
+            
+            // 初始化视图模式
+            toggleViewMode('list');
+        }
+        
+        // 切换视图模式
+        function toggleViewMode(mode) {
+            viewMode = mode;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.view-toggle').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.view-toggle[onclick="toggleViewMode('${mode}')"]`).classList.add('active');
+            
+            // 更新图像列表显示
+            updateImageList();
+        }
+        
+        // 处理搜索输入
+        function handleSearch(event) {
+            searchQuery = event.target.value.toLowerCase().trim();
+            updateImageList();
+        }
+        
+        // 获取过滤后的图像列表
+        function getFilteredImages() {
+            if (!searchQuery) {
+                return currentImages;
+            }
+            
+            return currentImages.filter(image => 
+                image.name.toLowerCase().includes(searchQuery)
+            );
         }
         
         // 初始化WebSocket连接
@@ -569,31 +832,137 @@
                 return;
             }
             
-            let html = '';
+            const filteredImages = getFilteredImages();
             
-            // 添加标题行
-            html += `
-                <div class="list-header-row">
-                    <div>文件名</div>
-                    <div>状态</div>
-                </div>
-            `;
-            
-            currentImages.forEach((image, index) => {
-                const isActive = index === currentImageIndex;
-                const statusClass = `status-${image.status}`;
-                
-                html += `
-                    <div class="image-item ${isActive ? 'active' : ''}" onclick="selectImage(${index})">
-                        <div class="image-name">${image.name}</div>
-                        <div class="image-status">
-                            <span class="status-badge ${statusClass}">${getStatusText(image.status)}</span>
-                        </div>
+            if (filteredImages.length === 0 && searchQuery) {
+                imageList.innerHTML = `
+                    <div class="no-images">
+                        <p>未找到匹配 "${searchQuery}" 的图像</p>
                     </div>
                 `;
-            });
+                return;
+            }
+            
+            let html = '';
+            
+            if (viewMode === 'list') {
+                // 列表视图
+                html += `
+                    <div class="list-header-row">
+                        <div>缩略图</div>
+                        <div>文件名</div>
+                        <div>状态</div>
+                    </div>
+                `;
+                
+                filteredImages.forEach((image, index) => {
+                    const originalIndex = currentImages.findIndex(img => img.name === image.name);
+                    const isActive = originalIndex === currentImageIndex;
+                    const statusClass = `status-${image.status}`;
+                    const thumbnailUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
+                    
+                    html += `
+                        <div class="image-item ${isActive ? 'active' : ''}" onclick="selectImage(${originalIndex})">
+                            <div class="image-thumbnail">
+                                <img src="${thumbnailUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'">
+                            </div>
+                            <div class="image-name">${image.name}</div>
+                            <div class="image-status">
+                                <span class="status-badge ${statusClass}">${getStatusText(image.status)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                // 网格视图
+                html += '<div class="grid-view">';
+                
+                filteredImages.forEach((image, index) => {
+                    const originalIndex = currentImages.findIndex(img => img.name === image.name);
+                    const isActive = originalIndex === currentImageIndex;
+                    const statusClass = `status-${image.status}`;
+                    const thumbnailUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
+                    
+                    html += `
+                        <div class="grid-item ${isActive ? 'active' : ''}" onclick="selectImage(${originalIndex})">
+                            <div class="grid-thumbnail">
+                                <img src="${thumbnailUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'">
+                            </div>
+                            <div class="grid-info">
+                                <div class="grid-name">${image.name}</div>
+                                <span class="grid-status ${statusClass}">${getStatusText(image.status)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
             
             imageList.innerHTML = html;
+            
+            // 预加载缩略图
+            preloadThumbnails();
+        }
+        
+        function preloadThumbnails() {
+            // 预加载当前可见区域和附近的缩略图
+            const filteredImages = getFilteredImages();
+            const visibleRange = getVisibleImageRange();
+            const preloadStart = Math.max(0, visibleRange.start - 5);
+            const preloadEnd = Math.min(filteredImages.length, visibleRange.end + 10);
+            
+            for (let i = preloadStart; i < preloadEnd; i++) {
+                const image = filteredImages[i];
+                const thumbnailUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
+                
+                // 检查缓存，避免重复加载
+                if (!thumbnailCache.has(thumbnailUrl)) {
+                    const img = new Image();
+                    img.onload = () => {
+                        thumbnailCache.set(thumbnailUrl, true);
+                    };
+                    img.src = thumbnailUrl;
+                }
+            }
+        }
+        
+        function getVisibleImageRange() {
+            const imageList = document.getElementById('image-list');
+            const items = viewMode === 'list' 
+                ? imageList.querySelectorAll('.image-item')
+                : imageList.querySelectorAll('.grid-item');
+            const listRect = imageList.getBoundingClientRect();
+            
+            let startIndex = -1;
+            let endIndex = -1;
+            
+            items.forEach((item, index) => {
+                const itemRect = item.getBoundingClientRect();
+                if (itemRect.bottom >= listRect.top && itemRect.top <= listRect.bottom) {
+                    if (startIndex === -1) startIndex = index;
+                    endIndex = index;
+                }
+            });
+            
+            return { start: startIndex, end: endIndex };
+        }
+        
+        // 添加滚动事件监听器
+        function setupScrollListener() {
+            const imageList = document.getElementById('image-list');
+            let scrollTimeout = null;
+            
+            imageList.addEventListener('scroll', () => {
+                // 使用防抖避免频繁触发
+                if (scrollTimeout) {
+                    clearTimeout(scrollTimeout);
+                }
+                
+                scrollTimeout = setTimeout(() => {
+                    preloadThumbnails();
+                }, 100);
+            });
         }
         
         // 获取状态文本
@@ -616,7 +985,9 @@
             
             // 自动滚动到选中的图像项
             setTimeout(() => {
-                const activeItem = document.querySelector('.image-item.active');
+                const activeItem = viewMode === 'list' 
+                    ? document.querySelector('.image-item.active')
+                    : document.querySelector('.grid-item.active');
                 if (activeItem) {
                     activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
@@ -944,6 +1315,158 @@
             });
         }
         
+        // 应用自适应二值化
+        function applyAdaptiveThreshold(enabled) {
+            // 更新全局参数
+            globalImageParams.adaptiveThreshold = enabled;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'adaptive_threshold', 
+                    value: enabled ? 'true' : 'false',
+                    blockSize: globalImageParams.adaptiveThresholdBlockSize,
+                    c: globalImageParams.adaptiveThresholdC
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 更新自适应二值化参数
+        function updateAdaptiveThresholdParams() {
+            globalImageParams.adaptiveThresholdBlockSize = parseInt(document.getElementById('adaptive-threshold-blocksize').value);
+            globalImageParams.adaptiveThresholdC = parseInt(document.getElementById('adaptive-threshold-c').value);
+            
+            if (globalImageParams.adaptiveThreshold && currentImages.length > 0 && currentImageIndex >= 0) {
+                applyAdaptiveThreshold(true);
+            }
+        }
+        
+        // 应用去噪声
+        function applyDenoise(enabled) {
+            // 更新全局参数
+            globalImageParams.denoise = enabled;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'denoise', 
+                    value: enabled ? 'true' : 'false',
+                    strength: globalImageParams.denoiseStrength
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 更新去噪声参数
+        function updateDenoiseParams() {
+            const strength = parseInt(document.getElementById('denoise-strength').value);
+            globalImageParams.denoiseStrength = strength;
+            document.getElementById('denoise-strength-value').textContent = strength;
+            
+            if (globalImageParams.denoise && currentImages.length > 0 && currentImageIndex >= 0) {
+                applyDenoise(true);
+            }
+        }
+        
+        // 应用闭运算
+        function applyClosing(enabled) {
+            // 更新全局参数
+            globalImageParams.closing = enabled;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'closing', 
+                    value: enabled ? 'true' : 'false',
+                    kernelSize: globalImageParams.closingKernelSize
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 更新闭运算参数
+        function updateClosingParams() {
+            globalImageParams.closingKernelSize = parseInt(document.getElementById('closing-kernel-size').value);
+            
+            if (globalImageParams.closing && currentImages.length > 0 && currentImageIndex >= 0) {
+                applyClosing(true);
+            }
+        }
+        
+        // 应用开运算
+        function applyOpening(enabled) {
+            // 更新全局参数
+            globalImageParams.opening = enabled;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'opening', 
+                    value: enabled ? 'true' : 'false',
+                    kernelSize: globalImageParams.openingKernelSize
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 更新开运算参数
+        function updateOpeningParams() {
+            globalImageParams.openingKernelSize = parseInt(document.getElementById('opening-kernel-size').value);
+            
+            if (globalImageParams.opening && currentImages.length > 0 && currentImageIndex >= 0) {
+                applyOpening(true);
+            }
+        }
+        
         // 重置图像操作
         function resetImageOperations() {
             resetImageControls(false);
@@ -973,7 +1496,16 @@
             rotate: 0,
             brightness: 0,
             contrast: 1,
-            grayscale: false
+            grayscale: false,
+            adaptiveThreshold: false,
+            adaptiveThresholdBlockSize: 11,
+            adaptiveThresholdC: 2,
+            denoise: false,
+            denoiseStrength: 10,
+            closing: false,
+            closingKernelSize: 3,
+            opening: false,
+            openingKernelSize: 3
         };
 
         // 重置图像控制（仅重置全局参数，但不更新UI）
@@ -983,7 +1515,16 @@
                 rotate: 0,
                 brightness: 0,
                 contrast: 1,
-                grayscale: false
+                grayscale: false,
+                adaptiveThreshold: false,
+                adaptiveThresholdBlockSize: 11,
+                adaptiveThresholdC: 2,
+                denoise: false,
+                denoiseStrength: 10,
+                closing: false,
+                closingKernelSize: 3,
+                opening: false,
+                openingKernelSize: 3
             };
 
             // 更新UI控件
@@ -994,6 +1535,16 @@
             document.getElementById('contrast-slider').value = 1;
             document.getElementById('contrast-value').textContent = '1.0';
             document.getElementById('grayscale-checkbox').checked = false;
+            document.getElementById('adaptive-threshold-checkbox').checked = false;
+            document.getElementById('adaptive-threshold-blocksize').value = 11;
+            document.getElementById('adaptive-threshold-c').value = 2;
+            document.getElementById('denoise-checkbox').checked = false;
+            document.getElementById('denoise-strength').value = 10;
+            document.getElementById('denoise-strength-value').textContent = '10';
+            document.getElementById('closing-checkbox').checked = false;
+            document.getElementById('closing-kernel-size').value = 3;
+            document.getElementById('opening-checkbox').checked = false;
+            document.getElementById('opening-kernel-size').value = 3;
 
             // 可选：应用到服务器
             if (applyToServer && currentImages.length > 0 && currentImageIndex >= 0) {
@@ -1045,63 +1596,259 @@
                 return;
             }
             
-            switch (event.key) {
-                case 'ArrowUp':
-                    // 上一张图像，不循环
-                    event.preventDefault();
-                    if (currentImageIndex > 0) {
-                        selectImage(currentImageIndex - 1);
-                    }
-                    break;
-                case 'ArrowDown':
-                    // 下一张图像，不循环
-                    event.preventDefault();
+            // 使用自定义快捷键配置
+            if (event.key.toLowerCase() === shortcutConfig.prevImage.toLowerCase()) {
+                // 上一张图像，不循环
+                event.preventDefault();
+                if (currentImageIndex > 0) {
+                    selectImage(currentImageIndex - 1);
+                }
+            } else if (event.key.toLowerCase() === shortcutConfig.nextImage.toLowerCase()) {
+                // 下一张图像，不循环
+                event.preventDefault();
+                if (currentImageIndex < currentImages.length - 1) {
+                    selectImage(currentImageIndex + 1);
+                }
+            } else if (event.key.toLowerCase() === shortcutConfig.markWubao.toLowerCase()) {
+                // 标记为误报并自动选择下一张图像
+                if (currentImages.length > 0 && currentImageIndex >= 0) {
+                    // 设置自动选择标志，防止WebSocket更新覆盖当前选择
+                    isAutoSelecting = true;
+                    
+                    const currentImage = currentImages[currentImageIndex];
+                    classifyImage(currentImage.name, 'wubao');
+                    // 自动选择下一张图像（如果有）
                     if (currentImageIndex < currentImages.length - 1) {
                         selectImage(currentImageIndex + 1);
                     }
-                    break;
-                case 'd':
-                case 'D':
-                    // 标记为误报并自动选择下一张图像
-                    if (currentImages.length > 0 && currentImageIndex >= 0) {
-                        // 设置自动选择标志，防止WebSocket更新覆盖当前选择
-                        isAutoSelecting = true;
-                        
-                        const currentImage = currentImages[currentImageIndex];
-                        classifyImage(currentImage.name, 'wubao');
-                        // 自动选择下一张图像（如果有）
-                        if (currentImageIndex < currentImages.length - 1) {
-                            selectImage(currentImageIndex + 1);
-                        }
+                }
+            } else if (event.key.toLowerCase() === shortcutConfig.markZhengbao.toLowerCase()) {
+                // 标记为正报并自动选择下一张图像
+                if (currentImages.length > 0 && currentImageIndex >= 0) {
+                    // 设置自动选择标志，防止WebSocket更新覆盖当前选择
+                    isAutoSelecting = true;
+                    
+                    const currentImage = currentImages[currentImageIndex];
+                    classifyImage(currentImage.name, 'zhengbao');
+                    // 自动选择下一张图像（如果有）
+                    if (currentImageIndex < currentImages.length - 1) {
+                        selectImage(currentImageIndex + 1);
                     }
-                    break;
-                case 'f':
-                case 'F':
-                    // 标记为正报并自动选择下一张图像
-                    if (currentImages.length > 0 && currentImageIndex >= 0) {
-                        // 设置自动选择标志，防止WebSocket更新覆盖当前选择
-                        isAutoSelecting = true;
-                        
-                        const currentImage = currentImages[currentImageIndex];
-                        classifyImage(currentImage.name, 'zhengbao');
-                        // 自动选择下一张图像（如果有）
-                        if (currentImageIndex < currentImages.length - 1) {
-                            selectImage(currentImageIndex + 1);
-                        }
-                    }
-                    break;
-                case 'c':
-                case 'C':
-                    // 清除当前图像分类
-                    clearCurrentClassification();
-                    break;
+                }
+            } else if (event.key.toLowerCase() === shortcutConfig.clearClassification.toLowerCase()) {
+                // 清除当前图像分类
+                clearCurrentClassification();
             }
         });
+        
+        // 快捷键设置功能
+        function showShortcutSettings() {
+            // 加载保存的快捷键配置
+            loadShortcuts();
+            
+            const modal = document.getElementById('shortcut-modal');
+            modal.style.display = 'block';
+            
+            // 添加点击模态框背景关闭的功能
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    hideShortcutSettings();
+                }
+            };
+            
+            // 添加ESC键关闭模态框的功能
+            document.addEventListener('keydown', handleModalKeydown);
+        }
+        
+        function hideShortcutSettings() {
+            document.getElementById('shortcut-modal').style.display = 'none';
+            // 移除ESC键监听
+            document.removeEventListener('keydown', handleModalKeydown);
+        }
+        
+        function handleModalKeydown(event) {
+            if (event.key === 'Escape') {
+                hideShortcutSettings();
+            }
+        }
+        
+        function handleShortcutInput(event, inputElement) {
+            // 阻止默认行为
+            event.preventDefault();
+            
+            // 忽略功能键（Ctrl, Alt, Shift, Meta）
+            if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+                return false;
+            }
+            
+            // 获取按下的键
+            let key = event.key;
+            
+            // 处理特殊键
+            if (key === ' ') {
+                key = 'Space';
+            } else if (key.length > 1) {
+                // 保持功能键的原名（如 ArrowUp, Enter 等）
+                key = key;
+            }
+            
+            // 检查快捷键冲突
+            if (checkShortcutConflict(key, inputElement.id)) {
+                alert('快捷键冲突！请选择其他快捷键。');
+                return false;
+            }
+            
+            // 更新输入框值
+            inputElement.value = key;
+            
+            return false;
+        }
+        
+        function checkShortcutConflict(newKey, currentInputId) {
+            const inputs = ['shortcut-prev', 'shortcut-next', 'shortcut-wubao', 'shortcut-zhengbao', 'shortcut-clear'];
+            
+            for (const inputId of inputs) {
+                if (inputId !== currentInputId) {
+                    const input = document.getElementById(inputId);
+                    if (input && input.value.toLowerCase() === newKey.toLowerCase()) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function hideShortcutSettings() {
+            document.getElementById('shortcut-modal').style.display = 'none';
+        }
+        
+        function saveShortcuts() {
+            const newConfig = {
+                prevImage: document.getElementById('shortcut-prev').value || 'ArrowUp',
+                nextImage: document.getElementById('shortcut-next').value || 'ArrowDown',
+                markWubao: document.getElementById('shortcut-wubao').value || 'd',
+                markZhengbao: document.getElementById('shortcut-zhengbao').value || 'f',
+                clearClassification: document.getElementById('shortcut-clear').value || 'c'
+            };
+            
+            // 最终检查快捷键冲突
+            if (hasDuplicateShortcuts(newConfig)) {
+                alert('存在快捷键冲突！请确保每个快捷键都是唯一的。');
+                return;
+            }
+            
+            shortcutConfig = newConfig;
+            
+            // 保存到localStorage
+            localStorage.setItem('shortcutConfig', JSON.stringify(shortcutConfig));
+            
+            // 更新快捷键提示
+            updateShortcutHint();
+            hideShortcutSettings();
+            alert('快捷键设置已保存');
+        }
+        
+        function hasDuplicateShortcuts(config) {
+            const shortcuts = Object.values(config);
+            const seen = new Set();
+            
+            for (const shortcut of shortcuts) {
+                const lowerShortcut = shortcut.toLowerCase();
+                if (seen.has(lowerShortcut)) {
+                    return true;
+                }
+                seen.add(lowerShortcut);
+            }
+            return false;
+        }
+        
+        function testShortcuts() {
+            const testConfig = {
+                prevImage: document.getElementById('shortcut-prev').value || 'ArrowUp',
+                nextImage: document.getElementById('shortcut-next').value || 'ArrowDown',
+                markWubao: document.getElementById('shortcut-wubao').value || 'd',
+                markZhengbao: document.getElementById('shortcut-zhengbao').value || 'f',
+                clearClassification: document.getElementById('shortcut-clear').value || 'c'
+            };
+            
+            if (hasDuplicateShortcuts(testConfig)) {
+                alert('存在快捷键冲突！请先解决冲突后再测试。');
+                return;
+            }
+            
+            let message = '快捷键测试结果：\n\n';
+            message += `上一张图片: ${testConfig.prevImage}\n`;
+            message += `下一张图片: ${testConfig.nextImage}\n`;
+            message += `标记为误报: ${testConfig.markWubao}\n`;
+            message += `标记为正报: ${testConfig.markZhengbao}\n`;
+            message += `清除分类: ${testConfig.clearClassification}\n\n`;
+            message += '请按这些快捷键测试功能是否正常工作。';
+            
+            alert(message);
+        }
+        
+        function loadShortcuts() {
+            const savedConfig = localStorage.getItem('shortcutConfig');
+            if (savedConfig) {
+                shortcutConfig = JSON.parse(savedConfig);
+            }
+            
+            // 填充表单
+            document.getElementById('shortcut-prev').value = shortcutConfig.prevImage;
+            document.getElementById('shortcut-next').value = shortcutConfig.nextImage;
+            document.getElementById('shortcut-wubao').value = shortcutConfig.markWubao;
+            document.getElementById('shortcut-zhengbao').value = shortcutConfig.markZhengbao;
+            document.getElementById('shortcut-clear').value = shortcutConfig.clearClassification;
+        }
+        
+        function resetShortcuts() {
+            shortcutConfig = {
+                prevImage: 'ArrowUp',
+                nextImage: 'ArrowDown',
+                markWubao: 'd',
+                markZhengbao: 'f',
+                clearClassification: 'c'
+            };
+            
+            // 更新表单
+            document.getElementById('shortcut-prev').value = shortcutConfig.prevImage;
+            document.getElementById('shortcut-next').value = shortcutConfig.nextImage;
+            document.getElementById('shortcut-wubao').value = shortcutConfig.markWubao;
+            document.getElementById('shortcut-zhengbao').value = shortcutConfig.markZhengbao;
+            document.getElementById('shortcut-clear').value = shortcutConfig.clearClassification;
+            
+            // 保存到localStorage
+            localStorage.setItem('shortcutConfig', JSON.stringify(shortcutConfig));
+            
+            // 更新快捷键提示
+            updateShortcutHint();
+            alert('已恢复默认快捷键设置');
+        }
+        
+        function updateShortcutHint() {
+            const hintElement = document.querySelector('.keyboard-hint');
+            if (hintElement) {
+                hintElement.innerHTML = `
+                    <div class="hint-title">键盘快捷键:</div>
+                    <div class="hint-item">${shortcutConfig.prevImage}: 上一张图像</div>
+                    <div class="hint-item">${shortcutConfig.nextImage}: 下一张图像</div>
+                    <div class="hint-item">${shortcutConfig.markWubao}: 标记为误报</div>
+                    <div class="hint-item">${shortcutConfig.markZhengbao}: 标记为正报</div>
+                    <div class="hint-item">${shortcutConfig.clearClassification}: 清除当前图像分类</div>
+                    <div class="hint-item">
+                        <button class="settings-btn" onclick="showShortcutSettings()" style="margin-top: 10px; padding: 4px 8px; font-size: 11px;">自定义快捷键</button>
+                    </div>
+                `;
+            }
+        }
         
         // 初始化
         window.onload = function() {
             initFrontendState();
             initWebSocket();
+            // 加载快捷键配置
+            loadShortcuts();
+            updateShortcutHint();
         };
     </script>
 </body>

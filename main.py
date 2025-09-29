@@ -27,6 +27,11 @@ class StateManager:
         self.filters = {"wubao": True, "zhengbao": True, "unclassified": True}  # 默认显示所有分类
         self.current_image_index = 0
         self.image_operations = {}
+        # 用于增量更新的上一次状态
+        self.last_filtered_images = []
+        # 心跳包相关
+        self.last_ping_time = {}  # 记录每个客户端的最后ping时间
+        self.ping_interval = 10  # 心跳包间隔时间(秒)
 
     def set_directory(self, directory):
         self.current_directory = directory
@@ -120,20 +125,88 @@ class StateManager:
         self.websockets.remove(websocket)
 
     def _notify_clients(self):
-        data = {
-            "image_files": self.get_filtered_images(),
-            "current_directory": self.current_directory,
-            "current_index": self.current_image_index
-        }
-        asyncio.run(self._async_notify_clients(data))
+        # 获取当前过滤后的图像列表
+        current_filtered = self.get_filtered_images()
+        # 计算增量更新数据
+        incremental_data = self._calculate_incremental_update(current_filtered)
+        # 保存当前状态用于下次比较
+        self.last_filtered_images = current_filtered
+        # 发送增量更新
+        asyncio.run(self._async_notify_clients(incremental_data))
+
+    def _calculate_incremental_update(self, current_filtered):
+        """计算增量更新数据，只返回变化的部分"""
+        if not self.last_filtered_images:
+            # 首次更新，发送完整数据
+            return {
+                "type": "full_update",
+                "image_files": current_filtered,
+                "current_directory": self.current_directory,
+                "current_index": self.current_image_index
+            }
+        
+        # 检查是否有变化
+        if len(current_filtered) != len(self.last_filtered_images):
+            # 数量变化，发送完整更新
+            return {
+                "type": "full_update",
+                "image_files": current_filtered,
+                "current_directory": self.current_directory,
+                "current_index": self.current_image_index
+            }
+        
+        # 检查每个图像的状态是否变化
+        has_changes = False
+        for i, (current, last) in enumerate(zip(current_filtered, self.last_filtered_images)):
+            if current["name"] != last["name"] or current["status"] != last["status"]:
+                has_changes = True
+                break
+        
+        if has_changes:
+            # 内容变化，发送完整更新
+            return {
+                "type": "full_update",
+                "image_files": current_filtered,
+                "current_directory": self.current_directory,
+                "current_index": self.current_image_index
+            }
+        
+        # 没有变化，不发送更新
+        return None
 
     async def _async_notify_clients(self, data):
+        if data is None:
+            return
+            
         for websocket in list(self.websockets):
             try:
                 await websocket.send_text(json.dumps(data))
             except Exception:
-                pass
-
+                # 移除无法通信的客户端
+                try:
+                    self.websockets.remove(websocket)
+                except KeyError:
+                    pass
+                    
+    async def send_heartbeat(self):
+        """定期发送心跳包"""
+        while True:
+            await asyncio.sleep(self.ping_interval)
+            current_time = asyncio.get_event_loop().time()
+            # 检查并移除超时的连接
+            for websocket in list(self.websockets):
+                try:
+                    # 发送ping消息
+                    await websocket.send_text(json.dumps({"type": "ping"}))
+                    # 更新最后ping时间
+                    self.last_ping_time[id(websocket)] = current_time
+                except Exception:
+                    # 连接已断开，移除客户端
+                    try:
+                        self.websockets.remove(websocket)
+                        self.last_ping_time.pop(id(websocket), None)
+                    except KeyError:
+                        pass
     def get_filtered_images(self):
         if not self.current_directory:
             return []
@@ -532,15 +605,43 @@ def clear_classification(filename: str = None):
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    client_id = id(websocket)
     state_manager.add_websocket(websocket)
+    state_manager.last_ping_time[client_id] = asyncio.get_event_loop().time()
     
     try:
+        # 首次连接时发送完整数据
+        initial_data = {
+            "type": "full_update",
+            "image_files": state_manager.get_filtered_images(),
+            "current_directory": state_manager.current_directory,
+            "current_index": state_manager.current_image_index
+        }
+        await websocket.send_text(json.dumps(initial_data))
+        
+        # 启动心跳任务
+        asyncio.create_task(state_manager.send_heartbeat())
+        
         while True:
-            # 保持WebSocket连接活跃
-            await websocket.receive_text()
+            # 接收客户端消息
+            data = await websocket.receive_text()
+            
+            # 处理客户端消息
+            try:
+                message = json.loads(data)
+                # 处理心跳响应
+                if message.get("type") == "pong":
+                    # 更新客户端的最后响应时间
+                    state_manager.last_ping_time[client_id] = asyncio.get_event_loop().time()
+            except json.JSONDecodeError:
+                pass  # 忽略无效的JSON消息
     except WebSocketDisconnect:
         state_manager.remove_websocket(websocket)
-
+        state_manager.last_ping_time.pop(client_id, None)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        state_manager.remove_websocket(websocket)
+        state_manager.last_ping_time.pop(client_id, None)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8848)

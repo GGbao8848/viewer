@@ -92,6 +92,36 @@
             display: flex;
             overflow: hidden;
             min-height: 0;
+            position: relative;
+        }
+        
+        .image-list-toggle-btn {
+            position: absolute;
+            top: 50%;
+            left: 250px;
+            transform: translateY(-50%);
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            width: 20px;
+            height: 40px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            transition: left 0.3s ease;
+        }
+        
+        .image-list-toggle-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .image-list-toggle-btn.minimized {
+            left: 0;
+            border-radius: 4px 0 0 4px;
         }
         
         .image-list-container {
@@ -103,6 +133,13 @@
             flex-direction: column;
             overflow: hidden;
             flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        
+        .image-list-container.hidden {
+            transform: translateX(-100%);
+            position: absolute;
+            z-index: 1000;
         }
         
         /* 响应式设计调整 */
@@ -398,7 +435,7 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            padding: 15px;
+            padding: 0;
             min-height: 0;
             order: 1;
         }
@@ -980,6 +1017,7 @@
         </div>
         
         <div class="content">
+            <button class="image-list-toggle-btn" onclick="toggleImageListVisibility()" title="隐藏图像列表">></button>
             <div class="image-list-container">
                 <div class="list-header">
                     <div class="sort-controls">
@@ -1297,10 +1335,15 @@
             );
         }
         
+        // 心跳配置
+        let heartbeatInterval;
+        const HEARTBEAT_INTERVAL_MS = 5000; // 5秒发送一次心跳
+        
         // 初始化WebSocket连接
         function initWebSocket() {
             if (websocket) {
                 websocket.close();
+                clearInterval(heartbeatInterval);
             }
             
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -1309,34 +1352,84 @@
             
             websocket.onopen = function() {
                 console.log('WebSocket连接已建立');
+                // 开始发送心跳
+                startHeartbeat();
             };
             
             websocket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                currentImages = data.image_files;
-                currentDirectory = data.current_directory;
-                
-                // 只有当不是自动选择下一张图像时，才更新currentImageIndex
-                // 这样可以防止自动选择下一张的操作被WebSocket更新覆盖
-                if (!isAutoSelecting) {
-                    currentImageIndex = data.current_index;
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    // 处理不同类型的消息
+                    if (data.type === 'ping') {
+                        // 收到服务器心跳，回复pong
+                        sendPong();
+                    } else if (data.type === 'full_update' || !data.type) {
+                        // 处理完整更新
+                        currentImages = data.image_files;
+                        currentDirectory = data.current_directory;
+                        
+                        // 只有当不是自动选择下一张图像时，才更新currentImageIndex
+                        // 这样可以防止自动选择下一张的操作被WebSocket更新覆盖
+                        if (!isAutoSelecting) {
+                            currentImageIndex = data.current_index;
+                        }
+                        
+                        updateImageList();
+                        updateImageDisplay();
+                        updateDirectoryDisplay();
+                        
+                        // 重置自动选择标志
+                        isAutoSelecting = false;
+                    }
+                } catch (error) {
+                    console.error('解析WebSocket消息失败:', error);
                 }
-                
-                updateImageList();
-                updateImageDisplay();
-                updateDirectoryDisplay();
-                
-                // 重置自动选择标志
-                isAutoSelecting = false;
             };
             
-            websocket.onclose = function() {
-                console.log('WebSocket连接已关闭');
-                // 尝试重新连接
-                setTimeout(initWebSocket, 1000);
+            websocket.onclose = function(event) {
+                console.log('WebSocket连接已关闭', event.code, event.reason);
+                clearInterval(heartbeatInterval);
+                // 尝试重新连接，但使用渐进式退避算法
+                const reconnectDelay = Math.min(60000, Math.pow(2, getReconnectAttempts()) * 1000);
+                console.log(`将在${reconnectDelay}ms后尝试重新连接`);
+                setTimeout(initWebSocket, reconnectDelay);
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('WebSocket错误:', error);
             };
         }
         
+        // 开始发送心跳
+        function startHeartbeat() {
+            // 清除之前的心跳计时器
+            clearInterval(heartbeatInterval);
+            // 设置新的心跳计时器
+            heartbeatInterval = setInterval(function() {
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    sendPong(); // 发送pong作为心跳响应
+                }
+            }, HEARTBEAT_INTERVAL_MS);
+        }
+        
+        // 发送pong消息
+        function sendPong() {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                try {
+                    websocket.send(JSON.stringify({type: 'pong'}));
+                } catch (error) {
+                    console.error('发送pong消息失败:', error);
+                }
+            }
+        }
+        
+        // 获取重连尝试次数（用于渐进式退避）
+        let reconnectAttempts = 0;
+        function getReconnectAttempts() {
+            reconnectAttempts++;
+            return Math.min(reconnectAttempts, 10); // 最大10次，避免指数增长过大
+        }
         // 处理目录输入
         function handleDirectoryInput(event) {
             if (event.key === 'Enter') {
@@ -2451,6 +2544,31 @@
                 if (toggleBtn) {
                     toggleBtn.textContent = '+';
                     toggleBtn.title = '显示快捷键提示';
+                }
+            }
+        }
+        
+        function toggleImageListVisibility() {
+            const imageListContainer = document.querySelector('.image-list-container');
+            const toggleBtn = document.querySelector('.image-list-toggle-btn');
+            
+            if (imageListContainer.classList.contains('hidden')) {
+                // 显示图像列表
+                imageListContainer.classList.remove('hidden');
+                if (toggleBtn) {
+                    toggleBtn.classList.remove('minimized');
+                    toggleBtn.classList.add('maximized');
+                    toggleBtn.textContent = '>';
+                    toggleBtn.title = '隐藏图像列表';
+                }
+            } else {
+                // 隐藏图像列表
+                imageListContainer.classList.add('hidden');
+                if (toggleBtn) {
+                    toggleBtn.classList.add('minimized');
+                    toggleBtn.classList.remove('maximized');
+                    toggleBtn.textContent = '<';
+                    toggleBtn.title = '显示图像列表';
                 }
             }
         }

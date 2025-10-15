@@ -11,6 +11,8 @@ from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileCreat
 import asyncio
 import re
 import json
+from datetime import datetime
+import time
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -23,6 +25,7 @@ class StateManager:
         self.image_files = []
         self.observer = None
         self.websockets = set()
+        self.sort_type = "name"  # 默认按名称排序
         self.sort_order = "desc"  # 默认降序排序
         self.filters = {"wubao": True, "zhengbao": True, "unclassified": True}  # 默认显示所有分类
         self.current_image_index = 0
@@ -49,47 +52,60 @@ class StateManager:
         image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.tif']
         files = []
         
-        def get_sort_key(filename):
-            # 尝试提取更复杂的数字模式，包括浮点数
-            # 匹配可能的数字部分，包括小数点
-            try:
-                # 查找所有可能的数字（整数和浮点数）
-                number_patterns = re.findall(r'\d+\.\d+|\d+', filename)
-                if number_patterns:
-                    # 转换为数字（优先浮点数）
-                    numbers = []
-                    for pattern in number_patterns:
-                        if '.' in pattern:
-                            numbers.append(float(pattern))
-                        else:
-                            numbers.append(int(pattern))
-                    # 组合多个数字作为排序键，并添加原始文件名作为最后一个元素
-                    return tuple(numbers) + (filename,)
-                # 如果没有数字，使用一个固定的浮点数前缀和文件名作为排序键
-                return (float('-inf'), filename)
-            except:
-                # 如果解析失败，回退到使用固定前缀和文件名作为排序键
-                return (float('-inf'), filename)
-        
         for file in os.listdir(directory):
             file_path = os.path.join(directory, file)
             if os.path.isfile(file_path) and any(file.lower().endswith(ext) for ext in image_extensions):
-                # 获取排序键
-                sort_key = get_sort_key(file)
+                # 获取文件信息
+                file_stats = os.stat(file_path)
+                
+                # 根据排序类型获取相应的排序键
+                if self.sort_type == "name":
+                    # 尝试提取更复杂的数字模式，包括浮点数
+                    try:
+                        # 查找所有可能的数字（整数和浮点数）
+                        number_patterns = re.findall(r'\d+\.\d+|\d+', file)
+                        if number_patterns:
+                            # 转换为数字（优先浮点数）
+                            numbers = []
+                            for pattern in number_patterns:
+                                if '.' in pattern:
+                                    numbers.append(float(pattern))
+                                else:
+                                    numbers.append(int(pattern))
+                            # 组合多个数字作为排序键，并添加原始文件名作为最后一个元素
+                            sort_key = tuple(numbers) + (file,)
+                        else:
+                            # 如果没有数字，使用一个固定的浮点数前缀和文件名作为排序键
+                            sort_key = (float('-inf'), file)
+                    except:
+                        # 如果解析失败，回退到使用固定前缀和文件名作为排序键
+                        sort_key = (float('-inf'), file)
+                elif self.sort_type == "date":
+                    # 使用文件修改时间作为排序键
+                    sort_key = file_stats.st_mtime
+                elif self.sort_type == "size":
+                    # 使用文件大小作为排序键
+                    sort_key = file_stats.st_size
+                
                 files.append((file, sort_key))
         
         # 按排序键排序
         # 使用自定义比较函数确保类型安全
         def safe_sort_key(item):
             key = item[1]
-            # 确保所有键都是元组
-            if not isinstance(key, tuple):
-                return (float('-inf'), str(key))
-            # 转换所有元素为字符串以确保类型安全的比较
-            safe_key = []
-            for part in key:
-                safe_key.append(str(part))
-            return tuple(safe_key)
+            # 根据不同类型进行安全处理
+            if self.sort_type == "name":
+                # 确保所有键都是元组
+                if not isinstance(key, tuple):
+                    return (float('-inf'), str(key))
+                # 转换所有元素为字符串以确保类型安全的比较
+                safe_key = []
+                for part in key:
+                    safe_key.append(str(part))
+                return tuple(safe_key)
+            else:
+                # 对于日期和大小，直接返回数值
+                return key
         
         files.sort(key=safe_sort_key, reverse=self.sort_order == "desc")
         
@@ -110,8 +126,10 @@ class StateManager:
             self.image_files = self._get_image_files(self.current_directory)
             self._notify_clients()
 
-    def set_sort_order(self, order):
+    def set_sort_order(self, order, sort_type=None):
         self.sort_order = order
+        if sort_type is not None:
+            self.sort_type = sort_type
         self.update_image_files()
 
     def set_filters(self, filters):
@@ -364,6 +382,46 @@ class StateManager:
             kernel = np.ones((kernel_size, kernel_size), np.uint8)
             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
         
+        # 缩放操作
+        if "scale" in operations:
+            scale = operations["scale"]
+            if scale != 1.0:
+                width = int(image.shape[1] * scale)
+                height = int(image.shape[0] * scale)
+                image = cv2.resize(image, (width, height), interpolation=cv2.INTER_LINEAR)
+        
+        # 锐化操作
+        if "sharpen" in operations:
+            sharpen_strength = operations["sharpen"]
+            if sharpen_strength > 0:
+                # 创建锐化核
+                kernel = np.array([[-1, -1, -1],
+                                  [-1, 9 + sharpen_strength, -1],
+                                  [-1, -1, -1]])
+                # 确保图像是8位无符号整数类型
+                if image.dtype != np.uint8:
+                    image = cv2.convertScaleAbs(image)
+                image = cv2.filter2D(image, -1, kernel)
+        
+        # 饱和度操作
+        if "saturation" in operations:
+            saturation_factor = operations["saturation"]
+            if saturation_factor != 1.0:
+                # 转换到HSV颜色空间
+                hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+                # 调整饱和度通道
+                hsv[..., 1] = cv2.multiply(hsv[..., 1], saturation_factor)
+                # 确保值在有效范围内
+                hsv[..., 1] = np.clip(hsv[..., 1], 0, 255)
+                # 转换回RGB颜色空间
+                image = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
+        
+        # 翻转操作
+        if "flipHorizontal" in operations and operations["flipHorizontal"]:
+            image = cv2.flip(image, 1)  # 水平翻转
+        if "flipVertical" in operations and operations["flipVertical"]:
+            image = cv2.flip(image, 0)  # 垂直翻转
+        
         return image
 
     def generate_thumbnail(self, filename, max_width=200, max_height=150):
@@ -426,11 +484,13 @@ def get_images():
     return {"images": state_manager.get_filtered_images(), "current_directory": state_manager.current_directory}
 
 @app.post("/set_sort_order")
-def set_sort_order(order: str = Body(..., embed=True)):
+def set_sort_order(order: str = Body(..., embed=True), sort_type: str = Body(None, embed=True)):
     if order not in ["asc", "desc"]:
         raise HTTPException(status_code=400, detail="排序顺序必须是'asc'或'desc'")
-    state_manager.set_sort_order(order)
-    return {"status": "success", "order": order, "images": state_manager.get_filtered_images()}
+    if sort_type is not None and sort_type not in ["name", "date", "size"]:
+        raise HTTPException(status_code=400, detail="排序类型必须是'name'、'date'或'size'")
+    state_manager.set_sort_order(order, sort_type)
+    return {"status": "success", "order": order, "sort_type": sort_type, "images": state_manager.get_filtered_images()}
 
 @app.post("/set_filters")
 def set_filters(filters: dict = Body(..., embed=True)):
@@ -484,6 +544,16 @@ def apply_image_operation(filename: str = Body(..., embed=True), operation: str 
         processed_value = value.lower() == "true"
     elif operation == "opening":
         processed_value = value.lower() == "true"
+    elif operation == "scale":
+        processed_value = float(value) if value else 1.0
+    elif operation == "sharpen":
+        processed_value = float(value) if value else 0.0
+    elif operation == "saturation":
+        processed_value = float(value) if value else 1.0
+    elif operation == "flipHorizontal":
+        processed_value = value.lower() == "true"
+    elif operation == "flipVertical":
+        processed_value = value.lower() == "true"
     else:
         processed_value = value
     
@@ -519,6 +589,17 @@ def apply_global_image_operations(filename: str = Body(..., embed=True), params:
         if "opening" in params:
             temp_operations["opening"] = params["opening"]
             temp_operations["opening_kernelSize"] = params.get("openingKernelSize", 3)
+        # 新增功能参数
+        if "scale" in params:
+            temp_operations["scale"] = float(params["scale"])
+        if "sharpen" in params:
+            temp_operations["sharpen"] = float(params["sharpen"])
+        if "saturation" in params:
+            temp_operations["saturation"] = float(params["saturation"])
+        if "flipHorizontal" in params:
+            temp_operations["flipHorizontal"] = params["flipHorizontal"]
+        if "flipVertical" in params:
+            temp_operations["flipVertical"] = params["flipVertical"]
         
         # 获取处理后的图像
         image = state_manager.get_image_with_operations(filename, temp_operations)
@@ -557,6 +638,17 @@ def apply_global_image_operations(filename: str = Body(..., embed=True), params:
         if "opening" in params:
             state_manager.apply_image_operation(filename, "opening", params["opening"])
             state_manager.apply_image_operation(filename, "opening_kernelSize", params.get("openingKernelSize", 3))
+        # 新增功能参数
+        if "scale" in params:
+            state_manager.apply_image_operation(filename, "scale", float(params["scale"]))
+        if "sharpen" in params:
+            state_manager.apply_image_operation(filename, "sharpen", float(params["sharpen"]))
+        if "saturation" in params:
+            state_manager.apply_image_operation(filename, "saturation", float(params["saturation"]))
+        if "flipHorizontal" in params:
+            state_manager.apply_image_operation(filename, "flipHorizontal", params["flipHorizontal"])
+        if "flipVertical" in params:
+            state_manager.apply_image_operation(filename, "flipVertical", params["flipVertical"])
         
         return {"status": "success"}
 
@@ -570,6 +662,60 @@ def get_processed_image(filename: str):
     # 将图像转换为字节流
     _, buffer = cv2.imencode('.jpg', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
     return Response(content=buffer.tobytes(), media_type="image/jpeg")
+
+@app.get("/get_original_image")
+def get_original_image(filename: str):
+    """获取原始图像（不应用任何处理）"""
+    image_path = state_manager.get_image_path(filename)
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail="图像未找到")
+    
+    # 读取原始图像
+    image = cv2.imread(image_path)
+    if image is None:
+        raise HTTPException(status_code=500, detail="无法读取图像")
+    
+    # 将图像转换为字节流
+    _, buffer = cv2.imencode('.jpg', image)
+    return Response(content=buffer.tobytes(), media_type="image/jpeg")
+
+@app.get("/get_image_metadata")
+def get_image_metadata(filename: str):
+    """获取图像元数据"""
+    image_path = state_manager.get_image_path(filename)
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail="图像未找到")
+    
+    try:
+        # 获取基本文件信息
+        file_stats = os.stat(image_path)
+        
+        # 读取图像获取尺寸和通道数
+        image = cv2.imread(image_path)
+        if image is None:
+            raise Exception("无法读取图像")
+        
+        height, width = image.shape[:2]
+        channels = 1 if len(image.shape) == 2 else image.shape[2]
+        
+        # 获取文件扩展名作为格式
+        _, ext = os.path.splitext(filename)
+        format_type = ext.lower().lstrip('.')
+        
+        metadata = {
+            "filename": filename,
+            "width": width,
+            "height": height,
+            "channels": channels,
+            "format": format_type,
+            "size_kb": round(file_stats.st_size / 1024, 2),
+            "created_time": datetime.fromtimestamp(file_stats.st_ctime).strftime('%Y-%m-%d %H:%M:%S'),
+            "modified_time": datetime.fromtimestamp(file_stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        return metadata
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取元数据失败: {str(e)}")
 
 @app.get("/get_thumbnail")
 def get_thumbnail(filename: str):

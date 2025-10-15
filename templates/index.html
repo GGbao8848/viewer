@@ -27,42 +27,120 @@
         }
         
         .header {
-            background-color: #fff;
-            padding: 15px 20px;
-            border-bottom: 1px solid #ddd;
+            background-color: #ffffff;
+        }
+        
+        /* 对比视图样式 */
+        .comparison-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .comparison-image {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+        }
+        
+        .comparison-image img {
+            max-width: 100%;
+            max-height: 80%;
+            object-fit: contain;
+        }
+        
+        .comparison-divider {
+            width: 2px;
+            background-color: #ccc;
+            height: 80%;
+            align-self: center;
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            word-break: break-all;
+            max-width: 90%;
+        }
+        
+        /* 对比视图按钮样式 */
+        .btn.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        /* 响应式设计 - 在小屏幕上调整对比视图布局 */
+        @media (max-width: 768px) {
+            .comparison-container {
+                flex-direction: column;
+                height: 100%;
+            }
+            
+            .comparison-divider {
+                width: 80%;
+                height: 2px;
+                margin: 10px 0;
+            }
+            
+            .comparison-image img {
+                max-height: 40%;
+            }
+        }
+        
+        /* 原有.header样式 */
+        .header {
+            background-color: #ffffff;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
             gap: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            z-index: 100;
         }
         
         .header-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
         }
         
         .search-input {
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 4px;
+            padding: 9px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 14px;
-            width: 200px;
+            width: 220px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
         }
         
         .search-input:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: #4a6cf7;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.1);
         }
         
         /* 统一的按钮样式 */
         .btn {
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 4px;
+            padding: 9px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -71,46 +149,49 @@
             outline: none;
             user-select: none;
             -webkit-user-select: none;
+            gap: 6px;
         }
         
         .btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         .btn:active {
             transform: translateY(0);
-            box-shadow: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         /* 默认按钮样式 */
         .btn-default {
             background-color: #f8f9fa;
             color: #495057;
-            border-color: #ddd;
+            border-color: #e0e0e0;
         }
         
         .btn-default:hover {
             background-color: #e9ecef;
-            border-color: #adb5bd;
+            border-color: #dee2e6;
         }
         
         .btn-default.active {
-            background-color: #007bff;
+            background-color: #4a6cf7;
             color: white;
-            border-color: #007bff;
+
+            border-color: #4a6cf7;
         }
         
         /* 主按钮样式 */
         .btn-primary {
-            background-color: #007bff;
+            background-color: #4a6cf7;
             color: white;
-            border-color: #007bff;
+            border-color: #4a6cf7;
         }
         
         .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #004085;
+            background-color: #3a5ce7;
+            border-color: #3a5ce7;
+            box-shadow: 0 4px 12px rgba(74, 108, 247, 0.3);
         }
         
         /* 信息按钮样式 */
@@ -123,19 +204,34 @@
         .btn-info:hover {
             background-color: #138496;
             border-color: #117a8b;
+            box-shadow: 0 3px 10px rgba(23, 162, 184, 0.3);
         }
         
         .directory-input {
             flex: 1;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 4px;
+            padding: 10px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 14px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
         }
         
         .directory-input:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: #4a6cf7;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.1);
+        }
+        
+        #current-directory {
+            color: #6c757d;
+            font-size: 12px;
+            flex-shrink: 0;
+            padding: 4px 8px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
         }
         
         .content {
@@ -149,35 +245,50 @@
         .image-list-toggle-btn {
             position: absolute;
             top: 50%;
-            left: 250px;
             transform: translateY(-50%);
-            background-color: #007bff;
+            background-color: #4a6cf7;
             color: white;
             border: none;
-            border-radius: 0 4px 4px 0;
-            width: 20px;
-            height: 40px;
-            font-size: 14px;
+            border-radius: 0 6px 6px 0;
+            width: 28px;
+            height: 60px;
+            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1001;
-            transition: left 0.3s ease;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 6px rgba(0, 0, 0, 0.15);
+            font-weight: bold;
+            user-select: none;
         }
-        
+
+
         .image-list-toggle-btn:hover {
-            background-color: #0056b3;
+            background-color: #3a5ce7;
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
         }
-        
-        .image-list-toggle-btn.minimized {
+
+        .image-list-toggle-btn:active {
+            transform: translateY(-50%) scale(0.95);
+            box-shadow: 1px 0 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-list-toggle-btn {
             left: 0;
-            border-radius: 4px 0 0 4px;
+            border-radius: 6px 0 0 6px;
+        }
+
+        .image-list-container:not(.hidden) ~ .image-list-toggle-btn {
+            left: calc(var(--sidebar-width, 250px) + 4px);
+            border-radius: 0 6px 6px 0;
         }
         
         .image-list-container {
             width: 250px;
-            max-width: 30%;
+            max-width: 70%;
             background-color: #fff;
             border-right: 1px solid #ddd;
             display: flex;
@@ -185,6 +296,7 @@
             overflow: hidden;
             flex-shrink: 0;
             transition: transform 0.3s ease;
+            position: relative;
         }
         
         .image-list-container.hidden {
@@ -192,8 +304,34 @@
             position: absolute;
             z-index: 1000;
         }
+
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            cursor: col-resize;
+            background-color: transparent;
+        }
+        .resize-handle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        .resize-handle.dragging {
+            background-color: rgba(0, 123, 255, 0.3);
+        }
         
         /* 响应式设计调整 */
+        @media (max-width: 1024px) {
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .search-input {
+                width: 180px;
+            }
+        }
+        
         @media (max-width: 768px) {
             .image-list-container {
                 width: 200px;
@@ -202,11 +340,31 @@
             
             .header {
                 flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
             }
             
             .directory-input {
                 order: -1;
                 width: 100%;
+                min-width: 0;
+            }
+            
+            .search-input {
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+            
+            #current-directory {
+                width: 100%;
+                text-align: center;
+                order: 1;
             }
         }
         
@@ -214,6 +372,19 @@
             .image-list-container {
                 width: 160px;
                 max-width: 45%;
+            }
+            
+            .header {
+                padding: 8px 12px;
+            }
+            
+            .header-controls {
+                gap: 6px;
+            }
+            
+            .btn {
+                padding: 7px 12px;
+                font-size: 12px;
             }
         }
         
@@ -249,6 +420,32 @@
             background-color: #007bff;
             color: white;
             border-color: #007bff;
+        }
+        
+        .sort-type-controls {
+            display: flex;
+            gap: 8px;
+            margin-left: 10px;
+        }
+        
+        .sort-type-btn {
+            padding: 6px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .sort-type-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sort-type-btn.active {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
         }
         
         .clear-controls {
@@ -1005,6 +1202,8 @@
             right: 20px;
             transform: translateY(-50%);
             z-index: 1000;
+            cursor: move;
+            user-select: none;
             
             /* 在小屏幕上自动隐藏或调整位置 */
             @media (max-width: 768px) {
@@ -1015,9 +1214,22 @@
             }
         }
         
+        /* 拖拽时的样式 */
+        .keyboard-hint-container.dragging {
+            opacity: 0.8;
+            z-index: 1001;
+        }
+        
+        /* 为拖拽添加视觉反馈 */
+        .keyboard-hint-container:hover {
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+        }
+        
         .keyboard-hint {
             background-color: rgba(0, 0, 0, 0.8);
             color: white;
+            cursor: move;
+            user-select: none;
             padding: 15px;
             border-radius: 4px;
             font-size: 12px;
@@ -1058,9 +1270,13 @@
         .hint-title {
             font-weight: bold;
             margin-bottom: 5px;
+            cursor: move;
+            user-select: none;
         }
         
         .hint-item {
+            cursor: move;
+            user-select: none;
             margin-bottom: 3px;
         }
         
@@ -1080,10 +1296,11 @@
             <input type="text" class="directory-input" placeholder="请输入图像文件夹路径" onkeypress="handleDirectoryInput(event)">
             <div class="header-controls">
                 <input type="text" class="search-input" placeholder="搜索文件名..." oninput="handleSearch(event)">
-                <button class="btn btn-default active" onclick="toggleViewMode('list')">列表视图</button>
-                <button class="btn btn-default" onclick="toggleViewMode('grid')">网格视图</button>
-                <button class="btn btn-info" onclick="showBackgroundSettings()">背景设置</button>
-                <button class="btn btn-info" id="controls-toggle" onclick="toggleControlsVisibility()">隐藏控制面板</button>
+                <button class="btn btn-default active" onclick="toggleViewMode('list')">📋 列表视图</button>
+                <button class="btn btn-default" onclick="toggleViewMode('grid')">🏙️ 网格视图</button>
+                <button class="btn btn-info" onclick="showBackgroundSettings()">🎨 背景设置</button>
+                <button class="btn btn-info" id="controls-toggle" onclick="toggleControlsVisibility()">🎛️ 隐藏控制面板</button>
+                <button class="btn btn-default" id="comparison-toggle" onclick="toggleComparisonView()">🔄 对比视图</button>
             </div>
             <span id="current-directory" style="color: #6c757d; font-size: 12px;">未选择文件夹</span>
         </div>
@@ -1091,10 +1308,16 @@
         <div class="content">
             <button class="image-list-toggle-btn" onclick="toggleImageListVisibility()" title="隐藏图像列表">></button>
             <div class="image-list-container">
+                <div class="resize-handle" title="拖动调整宽度"></div>
                 <div class="list-header">
                     <div class="sort-controls">
                         <button class="sort-btn" id="sort-asc" onclick="setSortOrder('asc')">从小到大排序</button>
                         <button class="sort-btn active" id="sort-desc" onclick="setSortOrder('desc')">从大到小排序</button>
+                        <div class="sort-type-controls">
+                            <button class="sort-type-btn active" data-sort-type="name" onclick="setSortOrder(currentSortOrder, 'name')">按名称排序</button>
+                            <button class="sort-type-btn" data-sort-type="date" onclick="setSortOrder(currentSortOrder, 'date')">按日期排序</button>
+                            <button class="sort-type-btn" data-sort-type="size" onclick="setSortOrder(currentSortOrder, 'size')">按大小排序</button>
+                        </div>
                     </div>
                     <div class="clear-controls">
                         <button class="clear-btn" onclick="clearCurrentClassification()">清除当前分类</button>
@@ -1151,6 +1374,26 @@
                             <label class="control-label">对比度:</label>
                             <input type="range" class="control-slider" id="contrast-slider" min="0" max="3" step="0.1" value="1" oninput="applyContrast(this.value)">
                             <span id="contrast-value" class="slider-value">1.0</span>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">缩放:</label>
+                            <input type="range" class="control-slider" id="scale-slider" min="0.1" max="3" step="0.1" value="1" oninput="applyScale(this.value)">
+                            <span id="scale-value" class="slider-value">1.0x</span>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">锐化:</label>
+                            <input type="range" class="control-slider" id="sharpen-slider" min="0" max="2" step="0.1" value="0" oninput="applySharpen(this.value)">
+                            <span id="sharpen-value" class="slider-value">0.0</span>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">饱和度:</label>
+                            <input type="range" class="control-slider" id="saturation-slider" min="0" max="3" step="0.1" value="1" oninput="applySaturation(this.value)">
+                            <span id="saturation-value" class="slider-value">1.0</span>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">翻转:</label>
+                            <button class="flip-btn" onclick="toggleFlip('horizontal')">↔️ 水平</button>
+                            <button class="flip-btn" onclick="toggleFlip('vertical')">↕️ 垂直</button>
                         </div>
                     </div>
                     
@@ -1274,7 +1517,7 @@
             <div class="hint-item">F: 标记为正报</div>
             <div class="hint-item">C: 清除当前图像分类</div>
             <div class="hint-item">
-                <button class="settings-btn" onclick="showShortcutSettings()" style="margin-top: 10px; padding: 4px 8px; font-size: 11px;">自定义快捷键</button>
+                <button class="settings-btn" onclick="showShortcutSettings()" style="margin-top: 10px; padding: 4px 8px; font-size: 11px; cursor: pointer;">自定义快捷键</button>
             </div>
         </div>
         <button class="hint-toggle-btn" onclick="toggleHintVisibility()" title="隐藏快捷键提示">×</button>
@@ -1326,10 +1569,12 @@
         let currentDirectory = null;
         let websocket = null;
         let currentSortOrder = 'desc';
+        let currentSortType = 'name'; // 排序类型: 'name', 'date', 'size'
         let isAutoSelecting = false; // 标记是否正在自动选择下一张图像
         let thumbnailCache = new Map(); // 缩略图缓存
         let viewMode = 'list'; // 视图模式: 'list' 或 'grid'
         let searchQuery = ''; // 搜索查询
+        let isComparisonView = false; // 是否处于对比视图模式
         
         // 快捷键配置
         let shortcutConfig = {
@@ -1356,6 +1601,21 @@
             }
         }
         
+        // 切换对比视图模式
+        function toggleComparisonView() {
+            isComparisonView = !isComparisonView;
+            const toggleButton = document.getElementById('comparison-toggle');
+            
+            if (isComparisonView) {
+                toggleButton.classList.add('active');
+                // 保持文本不变，仍然是"对比视图"
+            } else {
+                toggleButton.classList.remove('active');
+            }
+            
+            updateImageDisplay();
+        }
+        
         // 初始化前端状态
         function initFrontendState() {
             // 设置过滤器复选框状态，与后端保持一致
@@ -1374,6 +1634,91 @@
             if (toggleButton) {
                 toggleButton.textContent = '显示控制面板';
             }
+            
+            // 初始化键盘快捷键提示区域的拖拽功能
+            initHintDragging();
+        }
+        
+        // 初始化键盘快捷键提示区域的拖拽功能
+        function initHintDragging() {
+            const hintContainer = document.querySelector('.keyboard-hint-container');
+            if (!hintContainer) return;
+            
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            // 尝试从localStorage中恢复位置
+            const savedPosition = localStorage.getItem('hintContainerPosition');
+            if (savedPosition) {
+                try {
+                    const { top, left } = JSON.parse(savedPosition);
+                    hintContainer.style.top = top + 'px';
+                    hintContainer.style.left = left + 'px';
+                    hintContainer.style.right = 'auto';
+                    hintContainer.style.transform = 'none';
+                } catch (e) {
+                    console.error('Failed to restore hint container position:', e);
+                }
+            }
+            
+            // 鼠标按下事件，开始拖拽 - 直接监听容器，不管内部元素
+            hintContainer.addEventListener('mousedown', (e) => {
+                // 排除点击自定义按钮的情况
+                if (e.target.classList.contains('settings-btn')) {
+                    return;
+                }
+                
+                isDragging = true;
+                hintContainer.classList.add('dragging');
+                
+                // 计算鼠标位置与容器左上角的偏移量
+                const rect = hintContainer.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                
+                // 防止文本选择
+                e.preventDefault();
+            });
+            
+            // 鼠标移动事件，更新位置
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                // 计算新位置，确保不会超出可视区域
+                let newLeft = e.clientX - offsetX;
+                let newTop = e.clientY - offsetY;
+                
+                // 限制在可视区域内
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const containerWidth = hintContainer.offsetWidth;
+                const containerHeight = hintContainer.offsetHeight;
+                
+                newLeft = Math.max(0, Math.min(newLeft, viewportWidth - containerWidth));
+                newTop = Math.max(0, Math.min(newTop, viewportHeight - containerHeight));
+                
+                // 更新位置
+                hintContainer.style.top = newTop + 'px';
+                hintContainer.style.left = newLeft + 'px';
+                hintContainer.style.right = 'auto';
+                hintContainer.style.transform = 'none';
+            });
+            
+            // 鼠标释放事件，结束拖拽
+            document.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                hintContainer.classList.remove('dragging');
+                
+                // 保存位置到localStorage
+                const rect = hintContainer.getBoundingClientRect();
+                const position = {
+                    top: rect.top,
+                    left: rect.left
+                };
+                localStorage.setItem('hintContainerPosition', JSON.stringify(position));
+            });
         }
         
         // 切换视图模式
@@ -1777,6 +2122,12 @@
             document.getElementById('brightness-value').textContent = globalImageParams.brightness;
             document.getElementById('contrast-slider').value = globalImageParams.contrast;
             document.getElementById('contrast-value').textContent = globalImageParams.contrast.toFixed(1);
+            document.getElementById('scale-slider').value = globalImageParams.scale;
+            document.getElementById('scale-value').textContent = `${globalImageParams.scale.toFixed(1)}x`;
+            document.getElementById('sharpen-slider').value = globalImageParams.sharpen;
+            document.getElementById('sharpen-value').textContent = globalImageParams.sharpen.toFixed(1);
+            document.getElementById('saturation-slider').value = globalImageParams.saturation;
+            document.getElementById('saturation-value').textContent = globalImageParams.saturation.toFixed(1);
             document.getElementById('grayscale-checkbox').checked = globalImageParams.grayscale;
             
             // 通知后端更新当前图像索引
@@ -1806,29 +2157,98 @@
             
             const currentImage = currentImages[currentImageIndex];
             
-            // 直接请求应用了全局参数的图像，避免先显示原始图像再应用参数导致的闪烁
-            fetch('/apply_global_image_operations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    filename: currentImage.name,
-                    params: globalImageParams,
-                    just_get: true  // 只获取处理后的图像，不保存操作
+            if (isComparisonView) {
+                // 对比视图：显示当前图像调整前后的对比
+                // 左边：原始图像（不应用任何调整参数）
+                // 右边：应用了当前所有调整参数的图像
+                
+                // 创建默认参数对象（无任何调整的状态）
+                const defaultParams = {
+                    rotate: 0,
+                    brightness: 0,
+                    contrast: 1.0,
+                    scale: 1.0,
+                    sharpen: 0.0,
+                    saturation: 1.0,
+                    grayscale: false
+                };
+                
+                // 为同一图像请求两个不同版本：原始版本和调整后版本
+                Promise.all([
+                    fetch('/apply_global_image_operations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            filename: currentImage.name,
+                            params: defaultParams, // 原始版本，不应用任何调整
+                            just_get: true
+                        })
+                    }).then(response => response.blob()),
+                    fetch('/apply_global_image_operations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            filename: currentImage.name,
+                            params: globalImageParams, // 应用当前所有调整参数的版本
+                            just_get: true
+                        })
+                    }).then(response => response.blob())
+                ])
+                .then(([originalBlob, adjustedBlob]) => {
+                    const originalUrl = URL.createObjectURL(originalBlob);
+                    const adjustedUrl = URL.createObjectURL(adjustedBlob);
+                    
+                    // 创建并排对比视图
+                    imageDisplay.innerHTML = `
+                        <div class="comparison-container">
+                            <div class="comparison-image">
+                                <img src="${originalUrl}" alt="${currentImage.name} (原始)">
+                                <div class="image-caption">原始图像</div>
+                            </div>
+                            <div class="comparison-divider"></div>
+                            <div class="comparison-image">
+                                <img src="${adjustedUrl}" alt="${currentImage.name} (调整后)">
+                                <div class="image-caption">调整后图像</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    imageInfo.textContent = `对比视图: ${currentImage.name} (原始 vs 调整后)`;
                 })
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                const imageUrl = URL.createObjectURL(blob);
-                imageDisplay.innerHTML = `<img src="${imageUrl}" alt="${currentImage.name}">`;
-                imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
-            })
-            .catch(() => {
-                // 回退到显示文件名
-                imageDisplay.innerHTML = `<div class="no-images"><p>${currentImage.name}</p></div>`;
-                imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
-            });
+                .catch(() => {
+                    // 回退到单图显示
+                    imageDisplay.innerHTML = `<div class="no-images"><p>对比视图加载失败</p></div>`;
+                    imageInfo.textContent = '对比视图加载失败';
+                });
+            } else {
+                // 单图视图（默认行为）
+                fetch('/apply_global_image_operations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: currentImage.name,
+                        params: globalImageParams,
+                        just_get: true  // 只获取处理后的图像，不保存操作
+                    })
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    const imageUrl = URL.createObjectURL(blob);
+                    imageDisplay.innerHTML = `<img src="${imageUrl}" alt="${currentImage.name}">`;
+                    imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
+                })
+                .catch(() => {
+                    // 回退到显示文件名
+                    imageDisplay.innerHTML = `<div class="no-images"><p>${currentImage.name}</p></div>`;
+                    imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
+                });
+            }
         }
         
         // 更新目录显示
@@ -1842,14 +2262,17 @@
         }
         
         // 设置排序顺序
-        async function setSortOrder(order) {
+        async function setSortOrder(order, sortType = null) {
             try {
+                // 如果未提供排序类型，则使用当前排序类型
+                const finalSortType = sortType || currentSortType;
+                
                 const response = await fetch('/set_sort_order', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ order })
+                    body: JSON.stringify({ order, sort_type: finalSortType })
                 });
                 
                 if (!response.ok) {
@@ -1859,6 +2282,14 @@
                 const data = await response.json();
                 currentImages = data.images;
                 currentSortOrder = order;
+                if (sortType) {
+                    currentSortType = sortType;
+                    
+                    // 更新排序类型按钮样式
+                    document.querySelectorAll('.sort-type-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.sortType === currentSortType);
+                    });
+                }
                 updateImageList();
                 
                 // 更新排序按钮样式
@@ -2055,6 +2486,124 @@
                     filename: currentImage.name, 
                     operation: 'contrast', 
                     value: value 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 应用缩放
+        function applyScale(value) {
+            document.getElementById('scale-value').textContent = `${parseFloat(value).toFixed(1)}x`;
+            
+            // 更新全局参数
+            globalImageParams.scale = value;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'scale', 
+                    value: value 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 应用锐化
+        function applySharpen(value) {
+            document.getElementById('sharpen-value').textContent = parseFloat(value).toFixed(1);
+            
+            // 更新全局参数
+            globalImageParams.sharpen = value;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'sharpen', 
+                    value: value 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 应用饱和度
+        function applySaturation(value) {
+            document.getElementById('saturation-value').textContent = parseFloat(value).toFixed(1);
+            
+            // 更新全局参数
+            globalImageParams.saturation = value;
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'saturation', 
+                    value: value 
+                })
+            }).then(() => {
+                // 刷新图像显示
+                updateImageDisplay();
+            });
+        }
+        
+        // 切换翻转
+        function toggleFlip(direction) {
+            if (direction === 'horizontal') {
+                globalImageParams.flipHorizontal = !globalImageParams.flipHorizontal;
+            } else if (direction === 'vertical') {
+                globalImageParams.flipVertical = !globalImageParams.flipVertical;
+            }
+            
+            if (currentImages.length === 0 || currentImageIndex < 0) {
+                return;
+            }
+            
+            // 立即应用到当前图像
+            const currentImage = currentImages[currentImageIndex];
+            fetch('/apply_image_operation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    filename: currentImage.name, 
+                    operation: 'flip', 
+                    horizontal: globalImageParams.flipHorizontal, 
+                    vertical: globalImageParams.flipVertical
                 })
             }).then(() => {
                 // 刷新图像显示
@@ -2270,6 +2819,11 @@
             rotate: 0,
             brightness: 0,
             contrast: 1,
+            scale: 1,
+            flipHorizontal: false,
+            flipVertical: false,
+            sharpen: 0,
+            saturation: 1,
             grayscale: false,
             adaptiveThreshold: false,
             adaptiveThresholdBlockSize: 11,
@@ -2289,6 +2843,11 @@
                 rotate: 0,
                 brightness: 0,
                 contrast: 1,
+                scale: 1,
+                flipHorizontal: false,
+                flipVertical: false,
+                sharpen: 0,
+                saturation: 1,
                 grayscale: false,
                 adaptiveThreshold: false,
                 adaptiveThresholdBlockSize: 11,
@@ -2308,6 +2867,12 @@
             document.getElementById('brightness-value').textContent = '0';
             document.getElementById('contrast-slider').value = 1;
             document.getElementById('contrast-value').textContent = '1.0';
+            document.getElementById('scale-slider').value = 1;
+            document.getElementById('scale-value').textContent = '1.0x';
+            document.getElementById('sharpen-slider').value = 0;
+            document.getElementById('sharpen-value').textContent = '0.0';
+            document.getElementById('saturation-slider').value = 1;
+            document.getElementById('saturation-value').textContent = '1.0';
             document.getElementById('grayscale-checkbox').checked = false;
             document.getElementById('adaptive-threshold-checkbox').checked = false;
             document.getElementById('adaptive-threshold-blocksize').value = 11;
@@ -2628,19 +3193,22 @@
                 // 显示图像列表
                 imageListContainer.classList.remove('hidden');
                 if (toggleBtn) {
-                    toggleBtn.classList.remove('minimized');
-                    toggleBtn.classList.add('maximized');
                     toggleBtn.textContent = '>';
                     toggleBtn.title = '隐藏图像列表';
+                    // 显示时，按钮位置在侧边栏右侧
+                    const sidebarWidth = document.documentElement.style.getPropertyValue('--sidebar-width') || '250px';
+                    toggleBtn.style.left = `calc(${sidebarWidth} + 4px)`;
+                    toggleBtn.style.borderRadius = '0 6px 6px 0';
                 }
             } else {
                 // 隐藏图像列表
                 imageListContainer.classList.add('hidden');
                 if (toggleBtn) {
-                    toggleBtn.classList.add('minimized');
-                    toggleBtn.classList.remove('maximized');
                     toggleBtn.textContent = '<';
                     toggleBtn.title = '显示图像列表';
+                    // 隐藏时，按钮位置在最左侧
+                    toggleBtn.style.left = '0';
+                    toggleBtn.style.borderRadius = '4px 0 0 4px';
                 }
             }
         }
@@ -2874,6 +3442,71 @@
             });
         }
         
+        // 初始化侧边栏拖动调整功能
+        function initResizeHandle() {
+            const resizeHandle = document.querySelector('.resize-handle');
+            const imageListContainer = document.querySelector('.image-list-container');
+            
+            if (!resizeHandle || !imageListContainer) {
+                return;
+            }
+            
+            let isResizing = false;
+            let startX, startWidth;
+            
+            // 鼠标按下开始拖动
+            resizeHandle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = imageListContainer.offsetWidth;
+                
+                resizeHandle.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+            });
+            
+            // 鼠标移动调整宽度
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) {
+                    return;
+                }
+                
+                const deltaX = e.clientX - startX;
+                let newWidth = startWidth + deltaX;
+                
+                // 设置最小宽度和最大宽度限制
+                const minWidth = 150;
+                const maxWidth = window.innerWidth * 0.7; // 最大为窗口宽度的70%
+                
+                newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
+                
+                // 更新侧边栏宽度
+                imageListContainer.style.width = newWidth + 'px';
+                imageListContainer.style.maxWidth = 'none'; // 临时禁用max-width，让拖动更流畅
+                
+                // 更新CSS变量，使按钮位置跟随侧边栏宽度变化
+                document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+                
+                // 直接更新按钮位置
+                const toggleBtn = document.querySelector('.image-list-toggle-btn');
+                if (toggleBtn && !imageListContainer.classList.contains('hidden')) {
+                    toggleBtn.style.left = `calc(${newWidth}px + 4px)`;
+                }
+            });
+            
+            // 鼠标释放结束拖动
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    resizeHandle.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                    
+                    // 恢复max-width限制
+                    imageListContainer.style.maxWidth = '70%';
+                }
+            });
+        }
+        
         // 初始化
         window.onload = function() {
             initFrontendState();
@@ -2889,6 +3522,31 @@
             // 应用保存的背景设置
             loadBackgroundSettings();
             applyBackgroundSettings();
+            
+            // 初始化侧边栏拖动调整功能
+            initResizeHandle();
+            
+            // 初始化侧边栏宽度变量和按钮位置
+            const imageListContainer = document.querySelector('.image-list-container');
+            const toggleBtn = document.querySelector('.image-list-toggle-btn');
+            
+            if (imageListContainer) {
+                const initialWidth = imageListContainer.offsetWidth;
+                document.documentElement.style.setProperty('--sidebar-width', initialWidth + 'px');
+                
+                // 初始化按钮位置
+                if (toggleBtn) {
+                    if (imageListContainer.classList.contains('hidden')) {
+                        // 如果侧边栏隐藏，按钮在最左侧
+                        toggleBtn.style.left = '0';
+                        toggleBtn.style.borderRadius = '6px 0 0 6px';
+                    } else {
+                        // 如果侧边栏显示，按钮在侧边栏右侧
+                        toggleBtn.style.left = `calc(${initialWidth}px + 4px)`;
+                        toggleBtn.style.borderRadius = '0 6px 6px 0';
+                    }
+                }
+            }
         };
     </script>
 </body>

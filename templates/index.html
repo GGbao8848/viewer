@@ -686,6 +686,7 @@
             padding: 0;
             min-height: 0;
             order: 1;
+            transition: flex-grow 0.3s ease;
         }
         
         .image-display img {
@@ -697,12 +698,15 @@
         }
         
         .image-info {
-            padding: 10px 15px;
+            padding: 0;
             background-color: #fff;
-            border-top: 1px solid #ddd;
-            font-size: 13px;
+            border-top: none;
+            font-size: 0;
             color: #666;
             order: 2;
+            height: 0;
+            overflow: hidden;
+            display: none;
         }
         
         /* 图像处理面板优化 */
@@ -716,20 +720,45 @@
             align-items: flex-start;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
             max-height: 250px;
+            min-height: 150px;
             overflow-y: auto;
             order: 3;
             transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+            position: relative;
         }
         
         /* 隐藏状态的样式 */
         .image-controls.hidden {
             max-height: 0;
+            min-height: 0;
             padding: 0;
+            margin: 0;
             opacity: 0;
             transform: translateY(10px);
             overflow: hidden;
             border-top: none;
             box-shadow: none;
+            flex: 0 0 0;
+        }
+        
+        /* 控制面板高度调整手柄 */
+        .controls-resize-handle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            cursor: row-resize;
+            background-color: transparent;
+            z-index: 11;
+        }
+        
+        .controls-resize-handle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .controls-resize-handle.dragging {
+            background-color: rgba(0, 123, 255, 0.3);
         }
         
         /* 控制切换按钮样式 */
@@ -1355,6 +1384,7 @@
                     请选择图像
                 </div>
                 <div class="image-controls hidden">
+                    <div class="controls-resize-handle" title="拖动调整高度"></div>
                     <!-- 基础调整 -->
                     <div class="control-section">
                         <div class="section-title">📐 基础调整</div>
@@ -2151,7 +2181,7 @@
                         <p>暂无图像显示</p>
                     </div>
                 `;
-                imageInfo.textContent = '请选择图像';
+                imageInfo.textContent = '';
                 return;
             }
             
@@ -2217,12 +2247,12 @@
                         </div>
                     `;
                     
-                    imageInfo.textContent = `对比视图: ${currentImage.name} (原始 vs 调整后)`;
+                    imageInfo.textContent = '';
                 })
                 .catch(() => {
                     // 回退到单图显示
                     imageDisplay.innerHTML = `<div class="no-images"><p>对比视图加载失败</p></div>`;
-                    imageInfo.textContent = '对比视图加载失败';
+                    imageInfo.textContent = '';
                 });
             } else {
                 // 单图视图（默认行为）
@@ -2241,12 +2271,12 @@
                 .then(blob => {
                     const imageUrl = URL.createObjectURL(blob);
                     imageDisplay.innerHTML = `<img src="${imageUrl}" alt="${currentImage.name}">`;
-                    imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
+                    imageInfo.textContent = '';
                 })
                 .catch(() => {
                     // 回退到显示文件名
                     imageDisplay.innerHTML = `<div class="no-images"><p>${currentImage.name}</p></div>`;
-                    imageInfo.textContent = `${currentImage.name} (${currentImageIndex + 1}/${currentImages.length}) - ${getStatusText(currentImage.status)}`;
+                    imageInfo.textContent = '';
                 });
             }
         }
@@ -3442,6 +3472,78 @@
             });
         }
         
+        // 初始化控制面板高度调整功能
+        function initControlsResizeHandle() {
+            const resizeHandle = document.querySelector('.controls-resize-handle');
+            const controlsContainer = document.querySelector('.image-controls');
+            
+            if (!resizeHandle || !controlsContainer) {
+                return;
+            }
+            
+            let isResizing = false;
+            let startY, startHeight;
+            
+            // 尝试从localStorage中恢复控制面板高度
+            const savedHeight = localStorage.getItem('controlsPanelHeight');
+            if (savedHeight) {
+                try {
+                    const height = parseInt(savedHeight);
+                    // 设置最小高度和最大高度限制
+                    const minHeight = 150;
+                    const maxHeight = window.innerHeight * 0.6; // 最大为窗口高度的60%
+                    
+                    const newHeight = Math.max(minHeight, Math.min(height, maxHeight));
+                    controlsContainer.style.maxHeight = newHeight + 'px';
+                } catch (e) {
+                    console.error('Failed to restore controls panel height:', e);
+                }
+            }
+            
+            // 鼠标按下开始拖动
+            resizeHandle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = controlsContainer.offsetHeight;
+                
+                resizeHandle.classList.add('dragging');
+                document.body.style.cursor = 'row-resize';
+            });
+            
+            // 鼠标移动调整高度
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) {
+                    return;
+                }
+                
+                const deltaY = startY - e.clientY; // 向上拖动增加高度，向下拖动减少高度
+                let newHeight = startHeight + deltaY;
+                
+                // 设置最小高度和最大高度限制
+                const minHeight = 150;
+                const maxHeight = window.innerHeight * 0.6; // 最大为窗口高度的60%
+                
+                newHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
+                
+                // 更新控制面板高度
+                controlsContainer.style.maxHeight = newHeight + 'px';
+            });
+            
+            // 鼠标释放结束拖动
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    resizeHandle.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                    
+                    // 保存控制面板高度到localStorage
+                    const height = controlsContainer.offsetHeight;
+                    localStorage.setItem('controlsPanelHeight', height.toString());
+                }
+            });
+        }
+        
         // 初始化侧边栏拖动调整功能
         function initResizeHandle() {
             const resizeHandle = document.querySelector('.resize-handle');
@@ -3525,6 +3627,9 @@
             
             // 初始化侧边栏拖动调整功能
             initResizeHandle();
+            
+            // 初始化控制面板高度调整功能
+            initControlsResizeHandle();
             
             // 初始化侧边栏宽度变量和按钮位置
             const imageListContainer = document.querySelector('.image-list-container');

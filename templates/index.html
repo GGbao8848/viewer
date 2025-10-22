@@ -263,6 +263,10 @@
             font-weight: bold;
             user-select: none;
         }
+        
+        .image-list-toggle-btn.hidden {
+            display: none;
+        }
 
 
         .image-list-toggle-btn:hover {
@@ -304,8 +308,20 @@
             position: absolute;
             z-index: 1000;
         }
-
-        .resize-handle {
+        
+        /* 网格视图下列表占满宽度 */
+        .image-list-container.full {
+            width: auto;
+            max-width: none;
+            flex: 1;
+        }
+         
+         /* 网格模式下隐藏大图查看器 */
+         .image-viewer.hidden {
+             display: none;
+         }
+  
+         .resize-handle {
             position: absolute;
             right: 0;
             top: 0;
@@ -336,6 +352,13 @@
             .image-list-container {
                 width: 200px;
                 max-width: 40%;
+            }
+            
+            /* 网格全宽模式 */
+            .image-list-container.full {
+                width: auto;
+                max-width: none;
+                flex: 1;
             }
             
             .header {
@@ -572,7 +595,7 @@
         /* 网格视图样式 */
         .grid-view {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-size, 120px), 1fr));
             gap: 12px;
             padding: 12px;
         }
@@ -598,9 +621,15 @@
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
         
+        /* 网格项选中样式（批量选择）*/
+        .grid-item.selected {
+            border-color: #28a745;
+            box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+        }
+        
         .grid-thumbnail {
             width: 100%;
-            height: 100px;
+            height: var(--grid-thumb-height, 100px);
             overflow: hidden;
             background-color: #f8f9fa;
         }
@@ -1327,6 +1356,11 @@
                 <input type="text" class="search-input" placeholder="搜索文件名..." oninput="handleSearch(event)">
                 <button class="btn btn-default active" onclick="toggleViewMode('list')">📋 列表视图</button>
                 <button class="btn btn-default" onclick="toggleViewMode('grid')">🏙️ 网格视图</button>
+                <span id="grid-size-control" style="display: none; align-items: center; gap: 6px; margin-left: 8px;">
+                    <label style="font-size: 12px; color: #6c757d;">网格大小</label>
+                    <input type="range" id="grid-size-slider" min="80" max="240" value="120" oninput="setGridSize(this.value)" style="width: 140px;">
+                    <span id="grid-size-value" style="font-size: 12px; color: #6c757d;">120px</span>
+                </span>
                 <button class="btn btn-info" onclick="showBackgroundSettings()">🎨 背景设置</button>
                 <button class="btn btn-info" id="controls-toggle" onclick="toggleControlsVisibility()">🎛️ 隐藏控制面板</button>
                 <button class="btn btn-default" id="comparison-toggle" onclick="toggleComparisonView()">🔄 对比视图</button>
@@ -1605,6 +1639,8 @@
         let viewMode = 'list'; // 视图模式: 'list' 或 'grid'
         let searchQuery = ''; // 搜索查询
         let isComparisonView = false; // 是否处于对比视图模式
+        let selectedIndices = new Set(); // 网格视图选中索引集合
+        let gridItemSize = 120; // 网格最小宽度（可调）
         
         // 快捷键配置
         let shortcutConfig = {
@@ -1760,6 +1796,31 @@
                 btn.classList.remove('active');
             });
             document.querySelector(`.btn.btn-default[onclick="toggleViewMode('${mode}')"]`).classList.add('active');
+            
+            // 切换大图查看器可见性
+            const imageViewer = document.querySelector('.image-viewer');
+            const imageListContainer = document.querySelector('.image-list-container');
+            const gridSizeControl = document.getElementById('grid-size-control');
+            const listToggleBtn = document.querySelector('.image-list-toggle-btn');
+            if (imageViewer) {
+                if (mode === 'grid') {
+                    imageViewer.classList.add('hidden');
+                    if (imageListContainer) {
+                        imageListContainer.classList.remove('hidden');
+                        imageListContainer.classList.add('full');
+                    }
+                    if (gridSizeControl) gridSizeControl.style.display = 'inline-flex';
+                    if (listToggleBtn) listToggleBtn.classList.add('hidden');
+                } else {
+                    imageViewer.classList.remove('hidden');
+                    if (imageListContainer) {
+                        imageListContainer.classList.remove('full');
+                    }
+                    if (gridSizeControl) gridSizeControl.style.display = 'none';
+                    if (listToggleBtn) listToggleBtn.classList.remove('hidden');
+                    selectedIndices.clear();
+                }
+            }
             
             // 更新图像列表显示
             updateImageList();
@@ -2024,7 +2085,7 @@
                 });
             } else {
                 // 网格视图
-                html += '<div class="grid-view">';
+                html += `<div class="grid-view" style="--grid-min-size: ${gridItemSize}px; --grid-thumb-height: ${Math.max(60, gridItemSize - 20)}px;">`;
                 
                 filteredImages.forEach((image, index) => {
                     const originalIndex = currentImages.findIndex(img => img.name === image.name);
@@ -2032,8 +2093,10 @@
                     const statusClass = `status-${image.status}`;
                     const thumbnailUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
                     
+                    const isSelected = selectedIndices.has(originalIndex);
+                    
                     html += `
-                        <div class="grid-item ${isActive ? 'active' : ''}" onclick="selectImage(${originalIndex})">
+                        <div class="grid-item ${isActive ? 'active' : ''} ${isSelected ? 'selected' : ''}" onclick="toggleGridSelection(${originalIndex})">
                             <div class="grid-thumbnail">
                                 <img src="${thumbnailUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'">
                             </div>
@@ -2052,6 +2115,14 @@
             
             // 预加载缩略图
             preloadThumbnails();
+        }
+        
+        function setGridSize(value) {
+            const size = parseInt(value, 10);
+            gridItemSize = isNaN(size) ? 120 : size;
+            const valueEl = document.getElementById('grid-size-value');
+            if (valueEl) valueEl.textContent = gridItemSize + 'px';
+            updateImageList();
         }
         
         function preloadThumbnails() {
@@ -2121,6 +2192,25 @@
                 case 'zhengbao': return '正报';
                 default: return '未分类';
             }
+        }
+        
+        // 网格视图下切换选中状态（批量选择）
+        function toggleGridSelection(index) {
+            if (viewMode !== 'grid') {
+                selectImage(index);
+                return;
+            }
+            if (index < 0 || index >= currentImages.length) {
+                return;
+            }
+            if (selectedIndices.has(index)) {
+                selectedIndices.delete(index);
+            } else {
+                selectedIndices.add(index);
+            }
+            // 更新当前索引为最近点击的项，便于使用方向键等
+            currentImageIndex = index;
+            updateImageList();
         }
         
         // 选择图像
@@ -2979,8 +3069,19 @@
                     selectImage(currentImageIndex + 1);
                 }
             } else if (event.key.toLowerCase() === shortcutConfig.markWubao.toLowerCase()) {
-                // 标记为误报并自动选择下一张图像
-                if (currentImages.length > 0 && currentImageIndex >= 0) {
+                // 标记为误报（支持网格视图批量选择）
+                event.preventDefault();
+                if (viewMode === 'grid' && selectedIndices.size > 0) {
+                    for (const idx of selectedIndices) {
+                        const img = currentImages[idx];
+                        if (img) {
+                            classifyImage(img.name, 'wubao');
+                        }
+                    }
+                    // 分类后自动清空选中集合
+                    selectedIndices.clear();
+                    updateImageList();
+                } else if (currentImages.length > 0 && currentImageIndex >= 0) {
                     // 设置自动选择标志，防止WebSocket更新覆盖当前选择
                     isAutoSelecting = true;
                     
@@ -2992,8 +3093,19 @@
                     }
                 }
             } else if (event.key.toLowerCase() === shortcutConfig.markZhengbao.toLowerCase()) {
-                // 标记为正报并自动选择下一张图像
-                if (currentImages.length > 0 && currentImageIndex >= 0) {
+                // 标记为正报（支持网格视图批量选择）
+                event.preventDefault();
+                if (viewMode === 'grid' && selectedIndices.size > 0) {
+                    for (const idx of selectedIndices) {
+                        const img = currentImages[idx];
+                        if (img) {
+                            classifyImage(img.name, 'zhengbao');
+                        }
+                    }
+                    // 分类后自动清空选中集合
+                    selectedIndices.clear();
+                    updateImageList();
+                } else if (currentImages.length > 0 && currentImageIndex >= 0) {
                     // 设置自动选择标志，防止WebSocket更新覆盖当前选择
                     isAutoSelecting = true;
                     
@@ -3005,8 +3117,22 @@
                     }
                 }
             } else if (event.key.toLowerCase() === shortcutConfig.clearClassification.toLowerCase()) {
-                // 清除当前图像分类
-                clearCurrentClassification();
+                // 清除分类（支持网格视图批量选择）
+                event.preventDefault();
+                if (viewMode === 'grid' && selectedIndices.size > 0) {
+                    for (const idx of selectedIndices) {
+                        const img = currentImages[idx];
+                        if (img) {
+                            classifyImage(img.name, 'unclassified');
+                        }
+                    }
+                    // 清空选中集合
+                    selectedIndices.clear();
+                    updateImageList();
+                } else {
+                    // 清除当前图像分类
+                    clearCurrentClassification();
+                }
             }
         });
         

@@ -529,7 +529,7 @@
         /* 图像列表标题行 */
         .list-header-row {
             display: grid;
-            grid-template-columns: 60px 1fr auto;
+            grid-template-columns: 1fr auto;
             padding: 8px 10px;
             font-weight: bold;
             background-color: #f8f9fa;
@@ -540,7 +540,7 @@
         
         .image-item {
             display: grid;
-            grid-template-columns: 60px 1fr auto;
+            grid-template-columns: 1fr auto;
             padding: 8px 10px;
             margin: 0;
             border: none;
@@ -1358,7 +1358,7 @@
                 <button class="btn btn-default" onclick="toggleViewMode('grid')">🏙️ 网格视图</button>
                 <span id="grid-size-control" style="display: none; align-items: center; gap: 6px; margin-left: 8px;">
                     <label style="font-size: 12px; color: #6c757d;">网格大小</label>
-                    <input type="range" id="grid-size-slider" min="80" max="240" value="120" oninput="setGridSize(this.value)" style="width: 140px;">
+                    <input type="range" id="grid-size-slider" min="80" max="480" value="120" oninput="setGridSize(this.value)" style="width: 140px;">
                     <span id="grid-size-value" style="font-size: 12px; color: #6c757d;">120px</span>
                 </span>
                 <button class="btn btn-info" onclick="showBackgroundSettings()">🎨 背景设置</button>
@@ -2059,7 +2059,6 @@
                 // 列表视图
                 html += `
                     <div class="list-header-row">
-                        <div>缩略图</div>
                         <div>文件名</div>
                         <div>状态</div>
                     </div>
@@ -2069,13 +2068,9 @@
                     const originalIndex = currentImages.findIndex(img => img.name === image.name);
                     const isActive = originalIndex === currentImageIndex;
                     const statusClass = `status-${image.status}`;
-                    const thumbnailUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
                     
                     html += `
                         <div class="image-item ${isActive ? 'active' : ''}" onclick="selectImage(${originalIndex})">
-                            <div class="image-thumbnail">
-                                <img src="${thumbnailUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'">
-                            </div>
                             <div class="image-name">${image.name}</div>
                             <div class="image-status">
                                 <span class="status-badge ${statusClass}">${getStatusText(image.status)}</span>
@@ -2091,14 +2086,14 @@
                     const originalIndex = currentImages.findIndex(img => img.name === image.name);
                     const isActive = originalIndex === currentImageIndex;
                     const statusClass = `status-${image.status}`;
-                    const thumbnailUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
+                    const originalImageUrl = `/get_original_image?filename=${encodeURIComponent(image.name)}`;
                     
                     const isSelected = selectedIndices.has(originalIndex);
                     
                     html += `
                         <div class="grid-item ${isActive ? 'active' : ''} ${isSelected ? 'selected' : ''}" onclick="toggleGridSelection(${originalIndex})">
                             <div class="grid-thumbnail">
-                                <img src="${thumbnailUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'">
+                                <img src="${originalImageUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'">
                             </div>
                             <div class="grid-info">
                                 <div class="grid-name">${image.name}</div>
@@ -2126,7 +2121,7 @@
         }
         
         function preloadThumbnails() {
-            // 预加载当前可见区域和附近的缩略图
+            // 根据视图模式预加载相应的图像
             const filteredImages = getFilteredImages();
             const visibleRange = getVisibleImageRange();
             const preloadStart = Math.max(0, visibleRange.start - 5);
@@ -2134,15 +2129,23 @@
             
             for (let i = preloadStart; i < preloadEnd; i++) {
                 const image = filteredImages[i];
-                const thumbnailUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
+                let imageUrl;
+                
+                if (viewMode === 'grid') {
+                    // 网格视图预加载原图
+                    imageUrl = `/get_original_image?filename=${encodeURIComponent(image.name)}`;
+                } else {
+                    // 列表视图预加载缩略图
+                    imageUrl = `/get_thumbnail?filename=${encodeURIComponent(image.name)}`;
+                }
                 
                 // 检查缓存，避免重复加载
-                if (!thumbnailCache.has(thumbnailUrl)) {
+                if (!thumbnailCache.has(imageUrl)) {
                     const img = new Image();
                     img.onload = () => {
-                        thumbnailCache.set(thumbnailUrl, true);
+                        thumbnailCache.set(imageUrl, true);
                     };
-                    img.src = thumbnailUrl;
+                    img.src = imageUrl;
                 }
             }
         }

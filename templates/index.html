@@ -3345,6 +3345,11 @@
         }
         
         function toggleImageListVisibility() {
+            // 在网格模式下不允许切换侧边栏可见性
+            if (viewMode === 'grid') {
+                return; // 直接返回，不执行任何操作
+            }
+            
             const imageListContainer = document.querySelector('.image-list-container');
             const toggleBtn = document.querySelector('.image-list-toggle-btn');
             

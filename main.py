@@ -6,9 +6,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # 导入分离出去的模块
-from state_manager import StateManager
-from event_handler import ImageFileEventHandler
-from api_routes import register_routes
+from src.state_manager import StateManager
+from src.event_handler import ImageFileEventHandler
+from src.api_routes import register_routes
 
 # 初始化状态管理器
 state_manager = StateManager()

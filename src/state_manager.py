@@ -101,13 +101,17 @@ class StateManager:
         return [file for file, _ in files]
 
     def _start_watching(self, directory):
-        if self.observer:
+        # 停止之前的监控
+        if hasattr(self, 'observer') and self.observer:
             self.observer.stop()
             self.observer.join()
         
-        from event_handler import ImageFileEventHandler
+        # 创建观察者
         self.observer = Observer()
+        # 创建事件处理器
+        from src.event_handler import ImageFileEventHandler
         event_handler = ImageFileEventHandler(self)
+        # 开始监控目录
         self.observer.schedule(event_handler, directory, recursive=False)
         self.observer.start()
 

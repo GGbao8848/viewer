@@ -215,6 +215,16 @@ class StateManager:
                         self.last_ping_time.pop(id(websocket), None)
                     except KeyError:
                         pass
+    
+    async def close_all_websockets(self):
+        """关闭所有WebSocket连接"""
+        for ws in list(self.websockets):
+            try:
+                await ws.close()
+            except:
+                pass
+        self.websockets.clear()
+        self.last_ping_time.clear()
     def get_filtered_images(self):
         if not self.current_directory:
             return []

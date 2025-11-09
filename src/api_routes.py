@@ -198,6 +198,94 @@ async def register_routes(app, state_manager, templates):
         image = state_manager.get_image_with_operations(filename, None)
         if image is None:
             raise HTTPException(status_code=404, detail="图像未找到")
+    
+    @app.post("/export_processed_images")
+    def export_processed_images(params: dict = Body(..., embed=True)):
+        """批量导出处理后的图像到export目录（与wubao和zhengbao同级）"""
+        if not state_manager.current_directory:
+            raise HTTPException(status_code=400, detail="未设置当前目录")
+        
+        # 获取父目录（wubao和zhengbao所在的目录）
+        parent_dir = os.path.dirname(state_manager.current_directory)
+        # 创建export目录
+        export_dir = os.path.join(parent_dir, "export")
+        os.makedirs(export_dir, exist_ok=True)
+        
+        # 获取需要处理的图像列表
+        filtered_images = state_manager.get_filtered_images()
+        if not filtered_images:
+            raise HTTPException(status_code=400, detail="没有可导出的图像")
+        
+        # 处理并导出每个图像
+        success_count = 0
+        error_count = 0
+        
+        for img_info in filtered_images:
+            filename = img_info["name"]
+            try:
+                # 创建临时操作字典
+                temp_operations = {}
+                
+                # 应用全局参数到临时操作字典
+                if "rotate" in params:
+                    temp_operations["rotate"] = float(params["rotate"])
+                if "brightness" in params:
+                    temp_operations["brightness"] = int(params["brightness"])
+                if "contrast" in params:
+                    temp_operations["contrast"] = float(params["contrast"])
+                if "grayscale" in params:
+                    temp_operations["grayscale"] = params["grayscale"]
+                if "adaptiveThreshold" in params:
+                    temp_operations["adaptive_threshold"] = params["adaptiveThreshold"]
+                    temp_operations["adaptive_threshold_blockSize"] = params.get("adaptiveThresholdBlockSize", 11)
+                    temp_operations["adaptive_threshold_c"] = params.get("adaptiveThresholdC", 2)
+                if "denoise" in params:
+                    temp_operations["denoise"] = params["denoise"]
+                    temp_operations["denoise_strength"] = params.get("denoiseStrength", 10)
+                if "closing" in params:
+                    temp_operations["closing"] = params["closing"]
+                    temp_operations["closing_kernelSize"] = params.get("closingKernelSize", 3)
+                if "opening" in params:
+                    temp_operations["opening"] = params["opening"]
+                    temp_operations["opening_kernelSize"] = params.get("openingKernelSize", 3)
+                # 新增功能参数
+                if "scale" in params:
+                    temp_operations["scale"] = float(params["scale"])
+                if "sharpen" in params:
+                    temp_operations["sharpen"] = float(params["sharpen"])
+                if "saturation" in params:
+                    temp_operations["saturation"] = float(params["saturation"])
+                if "flipHorizontal" in params:
+                    temp_operations["flipHorizontal"] = params["flipHorizontal"]
+                if "flipVertical" in params:
+                    temp_operations["flipVertical"] = params["flipVertical"]
+                
+                # 获取处理后的图像
+                image = state_manager.get_image_with_operations(filename, temp_operations)
+                if image is not None:
+                    # 保存到export目录
+                    export_path = os.path.join(export_dir, filename)
+                    # 确保图像格式正确
+                    if len(image.shape) == 2:
+                        # 灰度图
+                        cv2.imwrite(export_path, image)
+                    else:
+                        # RGB图转换为BGR
+                        cv2.imwrite(export_path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+                    success_count += 1
+                else:
+                    error_count += 1
+            except Exception as e:
+                print(f"导出图像 {filename} 失败: {str(e)}")
+                error_count += 1
+        
+        return {
+            "status": "success",
+            "export_dir": export_dir,
+            "success_count": success_count,
+            "error_count": error_count,
+            "total_count": len(filtered_images)
+        }
         
         # 将图像转换为字节流
         _, buffer = cv2.imencode('.jpg', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
